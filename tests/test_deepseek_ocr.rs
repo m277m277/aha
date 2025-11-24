@@ -27,12 +27,9 @@ fn deepseek_ocr_generate() -> Result<()> {
                         "text": "<image>\n<|grounding|>Convert the document to markdown. "
                     }
                 ]
-            },
-            {
-                "role": "assistant",
-                "content": ""
             }
-        ]
+        ],
+        "metadata": {"base_size": "640", "image_size": "640", "crop_mode": "false"}
     }
     "#;
     let model_path = "/home/jhq/huggingface_model/deepseek-ai/DeepSeek-OCR/";
@@ -77,7 +74,8 @@ async fn deepseek_ocr_stream() -> Result<()> {
                 "role": "assistant",
                 "content": ""
             }
-        ]
+        ],
+        "metadata": {"base_size": "640", "image_size": "640", "crop_mode": "false"}
     }
     "#;
     let model_path = "/home/jhq/huggingface_model/deepseek-ai/DeepSeek-OCR/";
