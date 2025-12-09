@@ -26,13 +26,39 @@
 ⭐ 如果这个项目对你有帮助，请给我们一个 Star！
 
 ## 环境依赖
-1. ffmpeg: 
-* ubuntu/WSL
+* 启用ffmpeg的feature时：
+    * ubuntu/WSL
+    ```bash
+    sudo apt-get update
+    sudo apt-get install -y clang pkg-config ffmpeg libavutil-dev libavcodec-dev libavformat-dev libavfilter-dev libavdevice-dev libswresample-dev libswscale-dev
+    ```
+    * windows参考： https://github.com/zmwangx/rust-ffmpeg/wiki/Notes-on-building
+
+## 功能特性
+项目提供了几个可选的功能特性，您可以根据需要启用它们：
+* flash-attn: 启用 Flash Attention 支持以提升模型推理性能：
 ```bash
-sudo apt-get update
-sudo apt-get install -y clang pkg-config ffmpeg libavutil-dev libavcodec-dev libavformat-dev libavfilter-dev libavdevice-dev libswresample-dev libswscale-dev
+cargo build --features flash-attn
 ```
-* windows参考： https://github.com/zmwangx/rust-ffmpeg/wiki/Notes-on-building
+
+* cuda: 为 candle 核心组件启用 CUDA 支持，实现 GPU 加速计算：
+```bash
+cargo build --features cuda
+```
+
+* ffmpeg: 启用 FFmpeg 支持，提供多媒体处理功能：
+```bash
+cargo build --features ffmpeg
+```
+* 组合使用功能特性
+
+```bash
+# 同时启用 CUDA 和 Flash Attention 以获得最佳性能
+cargo build --features "cuda,flash-attn"
+
+# 启用所有功能特性
+cargo build --features "cuda,flash-attn,ffmpeg"
+```
 
 ## 安装及使用
 

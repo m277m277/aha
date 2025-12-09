@@ -5,6 +5,7 @@ use aha_openai_dive::v1::resources::chat::{
 };
 use anyhow::{Result, anyhow};
 use candle_core::{DType, Device, IndexOp, Shape, Tensor};
+#[cfg(feature = "ffmpeg")]
 use ffmpeg_next as ffmpeg;
 use image::DynamicImage;
 use num::integer::lcm;
@@ -33,6 +34,7 @@ pub struct GeneralInput {
     pub second_per_grid_ts: Option<Vec<f32>>,
 }
 
+#[allow(unused)]
 pub struct Qwen2_5VLProcessor {
     vision_setting: VisionSetting,
     device: Device,
@@ -213,6 +215,7 @@ impl Qwen2_5VLProcessor {
         })
     }
 
+    #[allow(unused_mut)]
     pub fn process_info(
         &self,
         messages: &ChatCompletionParameters,
@@ -221,7 +224,7 @@ impl Qwen2_5VLProcessor {
         let mut pixel_values = None;
         let mut image_grid_thw = None;
         let mut pixel_values_video = None;
-        let mut video_grid_thw = None;
+        let mut video_grid_thw: Option<Tensor> = None;
         let mut second_per_grid_ts = None;
         let vision_map = self.extract_vision_info(messages)?;
         let img_mean =
@@ -251,6 +254,7 @@ impl Qwen2_5VLProcessor {
                     };
                 }
             }
+            #[cfg(feature = "ffmpeg")]
             if key.eq("video") {
                 let mut file_vec = Vec::new();
                 for file in &vec {
@@ -294,6 +298,7 @@ impl Qwen2_5VLProcessor {
             }
             text = text.replace("<|placeholder|>", &self.image_token);
         }
+        #[cfg(feature = "ffmpeg")]
         if let Some(ref video_grid_thw) = video_grid_thw {
             let mut index = 0;
             while text.contains(&self.video_token) {
@@ -359,6 +364,7 @@ pub fn smart_resize(
     Ok((h_bar, w_bar))
 }
 
+#[cfg(feature = "ffmpeg")]
 pub fn get_video_data(
     file: &String,
     vision_setting: &VisionSetting,

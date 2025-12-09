@@ -5,6 +5,7 @@ use aha_openai_dive::v1::resources::chat::{
 };
 use anyhow::{Result, anyhow};
 use candle_core::{DType, Device, IndexOp, Shape, Tensor};
+#[cfg(feature = "ffmpeg")]
 use ffmpeg_next as ffmpeg;
 use image::DynamicImage;
 use num::integer::lcm;
@@ -44,6 +45,7 @@ pub struct VideoMetadata {
     frame_indices: Vec<u32>,
 }
 
+#[allow(unused)]
 pub struct Qwen3VLProcessor {
     img_process_cfg: PreprocessorConfig,
     video_process_cfg: PreprocessorConfig,
@@ -256,6 +258,7 @@ impl Qwen3VLProcessor {
         })
     }
 
+    #[allow(unused)]
     fn calculate_timestamps(
         &self,
         frames_indices: Vec<u32>,
@@ -282,6 +285,7 @@ impl Qwen3VLProcessor {
         Ok(stamps)
     }
 
+    #[allow(unused)]
     pub fn process_info(
         &self,
         messages: &ChatCompletionParameters,
@@ -291,7 +295,7 @@ impl Qwen3VLProcessor {
         let mut image_grid_thw = None;
         let mut pixel_values_video = None;
         let mut video_grid_thw: Option<Tensor> = None;
-        let mut video_metadata = None;
+        let mut video_metadata: Option<Vec<VideoMetadata>> = None;
         let vision_map = self.extract_vision_info(messages)?;
         let img_mean =
             Tensor::from_slice(&self.img_process_cfg.image_mean, (3, 1, 1), &self.device)?
@@ -320,6 +324,7 @@ impl Qwen3VLProcessor {
                     };
                 }
             }
+            #[cfg(feature = "ffmpeg")]
             if key.eq("video") {
                 let mut file_vec = Vec::new();
                 let mut video_infos = Vec::new();
@@ -371,6 +376,7 @@ impl Qwen3VLProcessor {
             }
             text = text.replace("<|placeholder|>", &self.image_token);
         }
+        #[cfg(feature = "ffmpeg")]
         if let Some(ref video_grid_thw) = video_grid_thw {
             let mut index = 0;
             while text.contains(&self.video_token) {
@@ -471,6 +477,7 @@ pub fn video_smart_resize(
     Ok((h_bar, w_bar))
 }
 
+#[cfg(feature = "ffmpeg")]
 pub fn get_video_data(
     file: &String,
     patch_size: u32,

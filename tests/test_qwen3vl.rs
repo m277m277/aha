@@ -19,23 +19,21 @@ fn qwen3vl_generate() -> Result<()> {
                 "role": "user",
                 "content": [
                     {
-                        "type": "image",
-                        "image_url": 
+                        "type": "video",
+                        "video_url": 
                         {
-                            "url": "file://./assets/img/ocr_test1.png"
+                            "url": "./assets/video/video_test.mp4"
                         }
                     },             
                     {
                         "type": "text", 
-                        "text": "请分析图片并提取所有可见文本内容，按从左到右、从上到下的布局，返回纯文本"
+                        "text": "视频里发生了什么"
                     }
                 ]
             }
         ]
     }
     "#;
-    // ./assets/video/video_test.mp4
-
     let mes: ChatCompletionParameters = serde_json::from_str(message)?;
     let i_start = Instant::now();
     let mut qwen3vl = Qwen3VLGenerateModel::init(model_path, None, None)?;
