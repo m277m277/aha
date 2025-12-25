@@ -85,12 +85,13 @@ impl RMBG2_0 {
             return Ok(vec![]);
         }
 
-        // 并行预处理：提取原始尺寸和转换为 tensor
+        // 并行预处理：提取原始尺寸、RGB 数据和转换为 tensor
         let preprocessed: Vec<_> = imgs
             .par_iter()
             .map(|img| {
                 let height = img.height();
                 let width = img.width();
+                let rgb_img = img.to_rgb8();
                 let tensor = img_transform_with_resize(
                     img,
                     self.h,
@@ -100,17 +101,17 @@ impl RMBG2_0 {
                     &self.device,
                     self.dtype,
                 );
-                (img.clone(), height, width, tensor)
+                (rgb_img, height, width, tensor)
             })
             .collect();
 
         // 检查预处理是否有错误
         let mut tensors = Vec::with_capacity(preprocessed.len());
         let mut meta: Vec<_> = Vec::with_capacity(preprocessed.len());
-        for (img, height, width, tensor_result) in preprocessed {
+        for (rgb_img, height, width, tensor_result) in preprocessed {
             let tensor = tensor_result?;
             tensors.push(tensor);
-            meta.push((img, height, width));
+            meta.push((rgb_img, height, width));
         }
 
         // 批量推理：将所有图片合并为一个 batch
@@ -121,14 +122,13 @@ impl RMBG2_0 {
         let results: Vec<Result<RgbaImage>> = meta
             .into_par_iter()
             .enumerate()
-            .map(|(i, (img, height, width))| {
+            .map(|(i, (rgb_img, height, width))| {
                 let rmbg_tensor = batch_output.i(i)?;
                 let alpha_img = float_tensor_to_dynamic_image(&rmbg_tensor)?;
                 let alpha_img =
                     alpha_img.resize_exact(width, height, image::imageops::FilterType::CatmullRom);
                 let alpha_gray = alpha_img.to_luma8();
 
-                let rgb_img = img.to_rgb8();
                 let rgb_raw = rgb_img.as_raw();
                 let alpha_raw = alpha_gray.as_raw();
                 let pixel_count = (width * height) as usize;
