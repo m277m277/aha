@@ -8,7 +8,7 @@ use anyhow::{Result, anyhow};
 use base64::{Engine, engine::general_purpose};
 use candle_core::{DType, Device, Tensor};
 use image::{DynamicImage, ImageBuffer, ImageReader, Rgb, RgbImage, imageops};
-use rayon::prelude::*;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::utils::{ceil_by_factor, floor_by_factor, round_by_factor};
 

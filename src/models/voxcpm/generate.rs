@@ -213,7 +213,7 @@ impl GenerateModel for VoxCPMGenerate {
             extract_metadata_value::<f64>(&mes.metadata, "retry_badcase_ratio_threshold")
                 .unwrap_or(6.0);
         let target_text = extract_user_text(&mes)?;
-        let prompt_wav = extract_audio_url(&mes)?;
+        let prompt_wav = extract_audio_url(&mes);
         let prompt_wav_path = if !prompt_wav.is_empty() {
             Some(prompt_wav[0].clone())
         } else {

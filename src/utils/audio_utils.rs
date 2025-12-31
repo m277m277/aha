@@ -14,6 +14,7 @@ use candle_core::{D, Device, Tensor};
 use candle_nn::{Conv1d, Conv1dConfig, Module};
 use hound::{SampleFormat, WavReader};
 use num::integer::gcd;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::utils::get_default_save_dir;
 
@@ -276,7 +277,7 @@ pub fn get_audio_path(path_str: &str) -> Result<PathBuf> {
     }
 }
 
-pub fn load_audio(path: &str, device: Device) -> Result<(Tensor, usize)> {
+pub fn load_audio(path: &str, device: &Device) -> Result<(Tensor, usize)> {
     let audio_path = get_audio_path(path)?;
     let mut reader = WavReader::open(audio_path)?;
     let spec = reader.spec();
@@ -317,7 +318,7 @@ pub fn load_audio(path: &str, device: Device) -> Result<(Tensor, usize)> {
             samples.len() / spec.channels as usize,
             spec.channels as usize,
         ),
-        &device,
+        device,
     )?
     .t()?;
     if spec.channels > 1 {
@@ -329,7 +330,7 @@ pub fn load_audio(path: &str, device: Device) -> Result<(Tensor, usize)> {
 
 pub fn load_audio_with_resample(
     path: &str,
-    device: Device,
+    device: &Device,
     target_sample_rate: Option<usize>,
 ) -> Result<Tensor> {
     let (mut audio, sr) = load_audio(path, device)?;
@@ -387,7 +388,7 @@ pub fn get_audio_wav_u8(audio: &Tensor, sample_rate: u32) -> Result<Vec<u8>> {
     Ok(wav_buffer)
 }
 
-pub fn extract_audio_url(mes: &ChatCompletionParameters) -> Result<Vec<String>> {
+pub fn extract_audio_url(mes: &ChatCompletionParameters) -> Vec<String> {
     let mut audio_vec = Vec::new();
     for chat_mes in mes.messages.clone() {
         if let ChatMessage::User { content, .. } = chat_mes.clone()
@@ -400,20 +401,14 @@ pub fn extract_audio_url(mes: &ChatCompletionParameters) -> Result<Vec<String>> 
                 }
             }
         }
-        // if let ChatMessage::User { content, .. } = chat_mes.clone()
-        //     && let ChatMessageContent::ContentPart(part_vec) = content
-        // {
-        //     for part in part_vec {
-        //         if let ChatMessageContentPart::Text(text_part) = part {
-        //             let text = text_part.text;
-        //             if text.chars().count() > 0 {
-        //                 ret = ret + &text + "\n"
-        //             }
-        //         }
-        //     }
-        // }
     }
-    Ok(audio_vec)
+    audio_vec
+}
+
+pub fn extract_audios(mes: &ChatCompletionParameters, device: &Device, target_sample_rate: Option<usize>) -> Result<Vec<Tensor>> {
+    let audio_url_vec = extract_audio_url(mes);
+    // 并行加载音频
+    audio_url_vec.par_iter().map(|url| load_audio_with_resample(url, device, target_sample_rate)).collect()
 }
 
 // 从 ChatCompletionResponse 中提取音频数据
