@@ -16,7 +16,8 @@ use crate::{
     },
     tokenizer::TokenizerModel,
     utils::{
-        build_completion_chunk_response, build_completion_response, extract_metadata_value, find_type_files, get_device, get_dtype, get_logit_processor
+        build_completion_chunk_response, build_completion_response, extract_metadata_value,
+        find_type_files, get_device, get_dtype, get_logit_processor,
     },
 };
 
@@ -65,7 +66,9 @@ impl<'a> GenerateModel for Qwen3_5GenerateModel<'a> {
         };
         let enable_thinking = extract_metadata_value::<bool>(&mes.metadata, "enable_thinking");
         let mut logit_processor = get_logit_processor(mes.temperature, mes.top_p, None, seed);
-        let mes_render = self.chat_template.apply_chat_temp_think(&mes, enable_thinking)?;
+        let mes_render = self
+            .chat_template
+            .apply_chat_temp_think(&mes, enable_thinking)?;
         let input = self.pre_processor.process_info(&mes, &mes_render)?;
         let mut input_ids = self
             .tokenizer
@@ -123,7 +126,9 @@ impl<'a> GenerateModel for Qwen3_5GenerateModel<'a> {
         };
         let mut logit_processor = get_logit_processor(mes.temperature, mes.top_p, None, seed);
         let enable_thinking = extract_metadata_value::<bool>(&mes.metadata, "enable_thinking");
-        let mes_render = self.chat_template.apply_chat_temp_think(&mes, enable_thinking)?;
+        let mes_render = self
+            .chat_template
+            .apply_chat_temp_think(&mes, enable_thinking)?;
         let input = self.pre_processor.process_info(&mes, &mes_render)?;
         let mut input_ids = self
             .tokenizer
