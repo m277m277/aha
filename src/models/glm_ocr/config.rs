@@ -42,7 +42,6 @@ pub struct GlmOcrRopeParameters {
     pub rope_theta: f32,
 }
 
-
 /// Text decoder configuration for GLM-OCR.
 #[derive(Debug, Clone, PartialEq, Deserialize, Default)]
 pub struct GlmOcrTextConfig {

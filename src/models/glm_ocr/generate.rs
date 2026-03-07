@@ -5,7 +5,6 @@ use aha_openai_dive::v1::resources::chat::{
 use anyhow::{Result, anyhow};
 use candle_core::{DType, Device, IndexOp, Tensor};
 use candle_nn::VarBuilder;
-use candle_transformers::utils::apply_repeat_penalty;
 use rocket::async_stream::stream;
 use rocket::futures::Stream;
 
@@ -20,7 +19,10 @@ use crate::{
         },
     },
     tokenizer::TokenizerModel,
-    utils::{build_completion_chunk_response, build_completion_response, extract_user_text, find_type_files, get_device, get_dtype, get_logit_processor, img_utils::extract_image_url},
+    utils::{
+        build_completion_chunk_response, build_completion_response, extract_user_text,
+        find_type_files, get_device, get_dtype, get_logit_processor, img_utils::extract_image_url,
+    },
 };
 
 pub struct GlmOcrGenerateModel {
@@ -30,7 +32,6 @@ pub struct GlmOcrGenerateModel {
     model: GlmOcrModel,
     device: Device,
     eos_token_ids: Vec<u32>,
-    generation_config: GlmOcrGenerationConfig,
     model_name: String,
     image_token_id: u32,
     image_start_token_id: u32,
@@ -64,7 +65,6 @@ impl GlmOcrGenerateModel {
             model,
             device,
             eos_token_ids: generation_config.eos_token_id.clone(),
-            generation_config,
             model_name: "glm-ocr".to_string(),
             image_token_id: cfg.image_token_id,
             image_start_token_id: cfg.image_start_token_id,
@@ -136,7 +136,7 @@ impl GenerateModel for GlmOcrGenerateModel {
                 },
                 seqlen_offset,
             )?;
-            let logits = logits.i((0, seq_len - 1, ..))?.to_dtype(DType::F32)?;            
+            let logits = logits.i((0, seq_len - 1, ..))?.to_dtype(DType::F32)?;
             let next_token = logit_processor.sample(&logits)?;
 
             generate.push(next_token);
@@ -215,7 +215,7 @@ impl GenerateModel for GlmOcrGenerateModel {
                     seqlen_offset,
                 ).map_err(|e| anyhow!(format!("forward error: {e}")))?;
                 let logits = logits.i((0, seq_len - 1, ..)).map_err(|e| anyhow!(format!("index error: {e}")))?.to_dtype(DType::F32).map_err(|e| anyhow!(format!("dtype error: {e}")))?;
-                
+
                 let next_token = logit_processor.sample(&logits).map_err(|e| anyhow!(format!("sample error: {e}")))?;
                 generated.push(next_token);
 
@@ -254,6 +254,3 @@ impl GenerateModel for GlmOcrGenerateModel {
         Ok(Box::new(Box::pin(stream)))
     }
 }
-
-
-

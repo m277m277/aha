@@ -58,7 +58,6 @@ pub fn video_smart_resize(
     Ok((h_bar, w_bar))
 }
 
-
 // #[allow(unused)]
 // fn save_file(
 //     frame: &ffmpeg::frame::Video,

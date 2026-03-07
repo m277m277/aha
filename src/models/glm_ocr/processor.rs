@@ -87,11 +87,7 @@ impl GlmOcrProcessor {
         )?;
 
         // Resize image
-        let img = img.resize_exact(
-            target_w,
-            target_h,
-            image::imageops::FilterType::Lanczos3,
-        );
+        let img = img.resize_exact(target_w, target_h, image::imageops::FilterType::Lanczos3);
 
         let target_h = target_h as usize;
         let target_w = target_w as usize;
@@ -118,7 +114,8 @@ impl GlmOcrProcessor {
         let grid_h = target_h / self.patch_size;
         let grid_w = target_w / self.patch_size;
         let channels = 3;
-        let tensor = tensor.reshape((grid_h, self.patch_size, grid_w, self.patch_size, channels))?;
+        let tensor =
+            tensor.reshape((grid_h, self.patch_size, grid_w, self.patch_size, channels))?;
         let tensor = tensor.permute((0, 2, 4, 1, 3))?;
         let num_patches = grid_h * grid_w;
         let tensor = tensor.reshape((num_patches, channels, self.patch_size, self.patch_size))?;

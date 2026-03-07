@@ -731,7 +731,7 @@ pub fn extract_user_text(mes: &ChatCompletionParameters) -> Result<String> {
                             }
                         }
                     }
-                },
+                }
                 _ => {}
             }
         }
