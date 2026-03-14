@@ -19,32 +19,24 @@ fn qwen3_5_generate() -> Result<()> {
         "messages": [
             {
                 "role": "user",
-                "content": [ 
-                    {
-                        "type": "image",
-                        "image_url": 
-                        {
-                            "url": "https://www.lifeberrys.com/img/article/tourist-attraction-3-1644590220-lb.jpg"
-                        }
-                    },             
+                "content": [        
                     {
                         "type": "text", 
-                        "text": "描述这张图片."
+                        "text": "你好啊，你是谁"
                     }
                 ]
             }
-        ],
-        "metadata": {"enable_thinking": "true"}
+        ]
     }
     "#;
     let mes: ChatCompletionParameters = serde_json::from_str(message)?;
     let i_start = Instant::now();
-    let mut qwen3vl = Qwen3_5GenerateModel::init(&model_path, None, None)?;
+    let mut qwen3_5 = Qwen3_5GenerateModel::init(&model_path, None, None)?;
     let i_duration = i_start.elapsed();
     println!("Time elapsed in load model is: {:?}", i_duration);
 
     let i_start = Instant::now();
-    let res = qwen3vl.generate(mes)?;
+    let res = qwen3_5.generate(mes)?;
     let i_duration = i_start.elapsed();
     println!("generate: \n {:?}", res);
     if res.usage.is_some() {
