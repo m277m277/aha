@@ -39,8 +39,8 @@ fn qwen3_asr_generate() -> Result<()> {
     let res = model.generate(mes)?;
     let i_duration = i_start.elapsed();
     println!("generate: \n {:?}", res);
-    if res.usage.is_some() {
-        let num_token = res.usage.as_ref().unwrap().total_tokens;
+    if let Some(usage) = &res.usage {
+        let num_token = usage.total_tokens;
         let duration_secs = i_duration.as_secs_f64();
         let tps = num_token as f64 / duration_secs;
         println!("Tokens per second (TPS): {:.2}", tps);
