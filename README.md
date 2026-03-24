@@ -128,7 +128,7 @@ curl http://localhost:10100/chat/completions \
 |----------|--------|
 | **Text** | Qwen3, MiniCPM4, <br> LFM2-1.2B, LFM2.5-1.2B-Instruct |
 | **Vision** | Qwen2.5-VL, Qwen3-VL, Qwen3.5 |
-| **OCR** | DeepSeek-OCR, DeepSeek-OCR-2 , <br> Hunyuan-OCR, PaddleOCR-VL, PaddleOCR-VL1.5 |
+| **OCR** | DeepSeek-OCR, DeepSeek-OCR-2 , <br> , PaddleOCR-VL, PaddleOCR-VL1.5, <br> Hunyuan-OCR, GLM-OCR |
 | **ASR** | GLM-ASR-Nano, Fun-ASR-Nano, Qwen3-ASR |
 | **Audio** | VoxCPM, VoxCPM1.5 |
 | **Image** | RMBG-2.0 (background removal) |

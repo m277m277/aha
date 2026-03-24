@@ -129,11 +129,12 @@ curl http://localhost:10100/chat/completions \
 | 类别 | 模型 |
 |------|------|
 | **文本** | Qwen3, MiniCPM4, <br> LFM2-1.2B, LFM2.5-1.2B-Instruct |
-| **视觉** | Qwen2.5-VL, Qwen3-VL |
-| **OCR** | DeepSeek-OCR, DeepSeek-OCR-2 , <br> Hunyuan-OCR, PaddleOCR-VL, PaddleOCR-VL1.5 |
+| **视觉** | Qwen2.5-VL, Qwen3-VL, Qwen3.5 |
+| **OCR** | DeepSeek-OCR, DeepSeek-OCR-2 , <br> , PaddleOCR-VL, PaddleOCR-VL1.5, <br> Hunyuan-OCR, GLM-OCR |
 | **ASR** | GLM-ASR-Nano, Fun-ASR-Nano,Qwen3-ASR |
 | **音频** | VoxCPM, VoxCPM1.5 |
 | **图像** | RMBG-2.0 (背景移除) |
+
 
 ## 文档
 
