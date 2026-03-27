@@ -8,6 +8,7 @@ pub mod glm_asr_nano;
 pub mod glm_ocr;
 pub mod hunyuan_ocr;
 pub mod lfm2;
+pub mod lfm2vl;
 pub mod mask_gct;
 pub mod minicpm4;
 pub mod paddleocr_vl;

@@ -217,7 +217,14 @@ impl Lfm2Decoder {
             layers.push(layer);
         }
         let dim = config.hidden_size / config.num_attention_heads;
-        let pos_emb = RoPE::new(dim, config.rope_theta, vb.device())?;
+        let theta_base = if let Some(theta) = config.rope_theta {
+            theta
+        } else if let Some(param) = &config.rope_parameters {
+            param.rope_theta
+        } else {
+            1000000.0
+        };
+        let pos_emb = RoPE::new(dim, theta_base, vb.device())?;
         let embedding_norm =
             rms_norm(config.hidden_size, config.norm_eps, vb.pp("embedding_norm"))?;
         Ok(Self {

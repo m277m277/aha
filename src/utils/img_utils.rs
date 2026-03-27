@@ -110,6 +110,7 @@ pub fn extract_images(mes: &ChatCompletionParameters) -> Result<Vec<DynamicImage
     img_url_vec.par_iter().map(|url| get_image(url)).collect()
 }
 
+/// return vec<(grid_width, grid_height)>
 pub fn generate_target_ratios_sorted(min_num: u32, max_num: u32) -> Vec<(u32, u32)> {
     let mut target_ratios = HashSet::new();
 
@@ -130,6 +131,7 @@ pub fn generate_target_ratios_sorted(min_num: u32, max_num: u32) -> Vec<(u32, u3
     sorted_ratios
 }
 
+/// return (grid_width, grid_height)
 pub fn find_closest_aspect_ratio(
     aspect_ratio: f64,
     target_ratios: &[(u32, u32)],
@@ -160,6 +162,34 @@ pub fn find_closest_aspect_ratio(
     best_ratio
 }
 
+pub fn crop_img(
+    image: &DynamicImage,
+    grid_height: u32,
+    grid_width: u32,
+    image_size: u32,
+) -> Vec<DynamicImage> {
+    let target_width = image_size * grid_width;
+    let target_height = image_size * grid_height;
+    let blocks = grid_width * grid_height;
+    let mut resized_img = image.resize_exact(
+        target_width,
+        target_height,
+        image::imageops::FilterType::CatmullRom,
+    );
+    let mut processed_images = Vec::new();
+    for i in 0..blocks {
+        // Calculate box coordinates
+        let x1 = (i % grid_width) * image_size;
+        let y1 = (i / grid_width) * image_size;
+
+        // Crop the image
+        let split_img = resized_img.crop(x1, y1, image_size, image_size);
+        processed_images.push(split_img);
+    }
+    assert_eq!(processed_images.len() as u32, blocks);
+    processed_images
+}
+
 pub fn dynamic_preprocess(
     image: &DynamicImage,
     min_num: u32,
@@ -179,26 +209,32 @@ pub fn dynamic_preprocess(
         orig_height,
         image_size,
     );
-    let target_width = image_size * target_aspect_ratio.0;
-    let target_height = image_size * target_aspect_ratio.1;
-    let blocks = target_aspect_ratio.0 * target_aspect_ratio.1;
-    let mut resized_img = image.resize_exact(
-        target_width,
-        target_height,
-        image::imageops::FilterType::CatmullRom,
-    );
-    let mut processed_images = Vec::new();
-    let grid_width = target_width / image_size;
-    for i in 0..blocks {
-        // Calculate box coordinates
-        let x1 = (i % grid_width) * image_size;
-        let y1 = (i / grid_width) * image_size;
+    // let target_width = image_size * target_aspect_ratio.0;
+    // let target_height = image_size * target_aspect_ratio.1;
+    // let blocks = target_aspect_ratio.0 * target_aspect_ratio.1;
+    // let mut resized_img = image.resize_exact(
+    //     target_width,
+    //     target_height,
+    //     image::imageops::FilterType::CatmullRom,
+    // );
+    // let mut processed_images = Vec::new();
+    // let grid_width = target_aspect_ratio.0;
+    // for i in 0..blocks {
+    //     // Calculate box coordinates
+    //     let x1 = (i % grid_width) * image_size;
+    //     let y1 = (i / grid_width) * image_size;
 
-        // Crop the image
-        let split_img = resized_img.crop(x1, y1, image_size, image_size);
-        processed_images.push(split_img);
-    }
-    assert_eq!(processed_images.len() as u32, blocks);
+    //     // Crop the image
+    //     let split_img = resized_img.crop(x1, y1, image_size, image_size);
+    //     processed_images.push(split_img);
+    // }
+    // assert_eq!(processed_images.len() as u32, blocks);
+    let mut processed_images = crop_img(
+        image,
+        target_aspect_ratio.1,
+        target_aspect_ratio.0,
+        image_size,
+    );
 
     if use_thumbnail && processed_images.len() != 1 {
         let thumbnail_img = image.resize_exact(
@@ -257,6 +293,7 @@ pub fn img_transform(
     Ok(img_tensor)
 }
 
+/// return (height, width)
 pub fn img_smart_resize(
     img_h: u32,
     img_w: u32,

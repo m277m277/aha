@@ -1,8 +1,5 @@
 use aha::models::{
-    deepseek_ocr::config::DeepseekOCRConfig, hunyuan_ocr::config::HunYuanVLConfig,
-    lfm2::config::Lfm2Config, minicpm4::config::MiniCPM4Config,
-    paddleocr_vl::config::PaddleOCRVLConfig, qwen2_5vl::config::Qwen2_5VLConfig,
-    qwen3vl::config::Qwen3VLConfig, voxcpm::config::VoxCPMConfig,
+    deepseek_ocr::config::DeepseekOCRConfig, hunyuan_ocr::config::HunYuanVLConfig, lfm2::config::Lfm2Config, lfm2vl::config::{Lfm2ProcessorConfig, Lfm2VLConfig}, minicpm4::config::MiniCPM4Config, paddleocr_vl::config::PaddleOCRVLConfig, qwen2_5vl::config::Qwen2_5VLConfig, qwen3vl::config::Qwen3VLConfig, voxcpm::config::VoxCPMConfig
 };
 use anyhow::Result;
 
@@ -96,5 +93,18 @@ fn lfm2_config() -> Result<()> {
     println!("{:?}", config);
     config.full_attn_idx2layer_type();
     println!("{:?}", config);
+    Ok(())
+}
+
+#[test]
+fn lfm2vl_config() -> Result<()> {
+    // cargo test -F cuda --test config_tests lfm2vl_config -r -- --nocapture
+    let model_path = "/home/jhq/.aha/LiquidAI/LFM2.5-VL-1.6B/";
+    let config_path = model_path.to_string() + "/config.json";
+    let config: Lfm2VLConfig = serde_json::from_slice(&std::fs::read(config_path)?)?;
+    println!("{:?}", config);
+    let processor_config_path = model_path.to_string() + "/processor_config.json";
+    let processor_config: Lfm2ProcessorConfig = serde_json::from_slice(&std::fs::read(processor_config_path)?)?;
+    println!("{:?}", processor_config);
     Ok(())
 }

@@ -1,6 +1,6 @@
 use anyhow::{Result, anyhow};
-use serde::{Deserialize, Serialize};
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+
+#[derive(Debug, Clone, PartialEq, serde::Deserialize)]
 pub struct Lfm2Config {
     pub architectures: Vec<String>,
     pub block_auto_adjust_ff_dim: bool,
@@ -13,7 +13,7 @@ pub struct Lfm2Config {
     pub block_out_init_scale: f64,
     pub block_use_swiglu: bool,
     pub block_use_xavier_init: bool,
-    pub bos_token_id: u32,
+    pub bos_token_id: Option<u32>,
     #[serde[rename="conv_L_cache"]]
     pub conv_l_cache: usize,
     pub conv_bias: bool,
@@ -33,14 +33,21 @@ pub struct Lfm2Config {
     pub num_heads: usize,
     pub num_hidden_layers: usize,
     pub num_key_value_heads: usize,
-    pub pad_token_id: u32,
-    pub rope_theta: f32,
+    pub pad_token_id: Option<u32>,
+    pub rope_theta: Option<f32>,
+    pub rope_parameters: Option<RopeParameters>,
     pub torch_dtype: Option<String>,
     pub dtype: Option<String>,
     pub use_cache: bool,
     pub use_pos_enc: bool,
     pub vocab_size: usize,
     pub tie_embedding: Option<bool>,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Deserialize)]
+pub struct RopeParameters {
+    pub rope_theta: f32,
+    pub rope_type: String,
 }
 
 impl Lfm2Config {
@@ -81,7 +88,7 @@ impl Lfm2Config {
     }
 }
 
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, serde::Deserialize)]
 pub struct Lfm2GenerateConfig {
     pub bos_token_id: u32,
     pub eos_token_id: u32,
