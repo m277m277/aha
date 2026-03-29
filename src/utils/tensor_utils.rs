@@ -1,3 +1,5 @@
+use std::f32;
+
 use anyhow::{Result, anyhow};
 use candle_core::{D, DType, Device, IndexOp, Tensor, shape::Dim};
 use candle_nn::ops::sigmoid;
@@ -30,6 +32,26 @@ pub fn attn_masked_fill(on_true: &Tensor, mask: &Tensor, on_false: f32) -> Resul
     let on_false = Tensor::new(on_false, on_true.device())?.broadcast_as(on_true.shape())?;
     let filled = mask.where_cond(on_true, &on_false)?;
     Ok(filled)
+}
+
+pub fn prepare_mask(mask: &Tensor) -> Result<Tensor> {
+    //(bs, seq_len)
+    // [[1, 1, 1, 1, 0, 0]]
+    // ->
+    // [[1, 1, 1, 1, 0, 0],
+    //  [1, 1, 1, 1, 0, 0],
+    //  [1, 1, 1, 1, 0, 0],
+    //  [1, 1, 1, 1, 0, 0],
+    //  [1, 1, 1, 1, 0, 0],
+    //  [1, 1, 1, 1, 0, 0],]
+    // (bs, 1, 1, seq_len)
+    let seq_len = mask.dim(1)?;
+    let mask = mask.unsqueeze(1)?.unsqueeze(1)?;
+    let mask = mask.repeat((1, 1, seq_len, 1))?;
+    let on_true = mask.zeros_like()?.to_dtype(DType::F32)?;
+    let on_false = Tensor::new(f32::NEG_INFINITY, mask.device())?.broadcast_as(mask.shape())?;
+    let mask = mask.where_cond(&on_true, &on_false)?;
+    Ok(mask)
 }
 
 pub fn prepare_causal_attention_mask(

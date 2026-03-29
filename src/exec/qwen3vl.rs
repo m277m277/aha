@@ -8,9 +8,9 @@ use crate::exec::ExecModel;
 use crate::models::{GenerateModel, qwen3vl::generate::Qwen3VLGenerateModel};
 use crate::utils::get_file_path;
 
-pub struct Qwen3vlExec;
+pub struct Qwen3VLExec;
 
-impl ExecModel for Qwen3vlExec {
+impl ExecModel for Qwen3VLExec {
     fn run(input: &[String], output: Option<&str>, weight_path: &str) -> Result<()> {
         let input_text = &input[0];
         let target_text = if input_text.starts_with("file://") {

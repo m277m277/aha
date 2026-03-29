@@ -2,7 +2,6 @@ use candle_nn::Activation;
 
 use crate::models::lfm2::config::Lfm2Config;
 
-
 #[derive(Debug, Clone, PartialEq, serde::Deserialize)]
 pub struct Lfm2VLConfig {
     pub do_image_splitting: bool,
@@ -19,14 +18,13 @@ pub struct Lfm2VLConfig {
     pub projector_bias: bool,
     pub projector_hidden_act: Activation,
     pub projector_hidden_size: usize,
-    pub projector_use_layernorm: bool,
+    pub projector_use_layernorm: Option<bool>,
     pub text_config: Lfm2Config,
     pub tile_size: usize,
     pub use_image_special_tokens: bool,
     pub use_thumbnail: bool,
     pub vision_config: Lfm2VLVisionConfig,
 }
-
 
 #[derive(Debug, Clone, PartialEq, serde::Deserialize)]
 pub struct Lfm2VLVisionConfig {
@@ -37,8 +35,8 @@ pub struct Lfm2VLVisionConfig {
     pub intermediate_size: usize,
     pub layer_norm_eps: f64,
     pub model_type: String,
-    pub num_attention_heads: u32,
-    pub num_channels: u32,
+    pub num_attention_heads: usize,
+    pub num_channels: usize,
     pub num_hidden_layers: usize,
     pub num_patches: usize,
     pub patch_size: usize,
@@ -79,4 +77,3 @@ pub struct Size {
 pub struct Lfm2ProcessorConfig {
     pub image_processor: Lfm2ImageConfig,
 }
-

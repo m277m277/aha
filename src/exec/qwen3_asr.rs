@@ -1,4 +1,4 @@
-//! Fun-ASR-Nano-2512 exec implementation for CLI `run` subcommand
+//! Qwen3ASR exec implementation for CLI `run` subcommand
 
 use std::time::Instant;
 

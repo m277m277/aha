@@ -9,19 +9,18 @@ use std::{pin::pin, time::Instant};
 #[test]
 fn lfm2_generate() -> Result<()> {
     // test with cuda: RUST_BACKTRACE=1 cargo test -F cuda --test test_lfm2 lfm2_generate -r -- --nocapture
-    // test with cuda+flash-attn: RUST_BACKTRACE=1 cargo test -F cuda,flash-attn qwen3_0_6b_generate -r -- --nocapture
 
     let save_dir =
         aha::utils::get_default_save_dir().ok_or(anyhow::anyhow!("Failed to get save dir"))?;
-    // let model_path = format!("{}/LiquidAI/LFM2-1.2B/", save_dir);
-    let model_path = format!("{}/LiquidAI/LFM2.5-1.2B-Instruct/", save_dir);
+    let model_path = format!("{}/LiquidAI/LFM2-1.2B/", save_dir);
+    // let model_path = format!("{}/LiquidAI/LFM2.5-1.2B-Instruct/", save_dir);
     let message = r#"
     {
         "model": "lfm2",
         "messages": [
             {
                 "role": "user",
-                "content": "你如何看待AI"
+                "content": "你是谁，你如何看待AI"
             }
         ]
     }

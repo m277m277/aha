@@ -246,8 +246,8 @@ fn run_list(args: ListArgs) -> anyhow::Result<()> {
         WhichModel::MiniCPM4_0_5B,
         WhichModel::LFM2_1_2B,
         WhichModel::LFM2_5_1_2BInstruct,
-        WhichModel::Qwen2_5vl3B,
-        WhichModel::Qwen2_5vl7B,
+        WhichModel::Qwen2_5VL3B,
+        WhichModel::Qwen2_5VL7B,
         WhichModel::Qwen3_0_6B,
         WhichModel::Qwen3_5_0_8B,
         WhichModel::Qwen3_5_2B,
@@ -255,10 +255,10 @@ fn run_list(args: ListArgs) -> anyhow::Result<()> {
         WhichModel::Qwen3_5_9B,
         WhichModel::Qwen3ASR0_6B,
         WhichModel::Qwen3ASR1_7B,
-        WhichModel::Qwen3vl2B,
-        WhichModel::Qwen3vl4B,
-        WhichModel::Qwen3vl8B,
-        WhichModel::Qwen3vl32B,
+        WhichModel::Qwen3VL2B,
+        WhichModel::Qwen3VL4B,
+        WhichModel::Qwen3VL8B,
+        WhichModel::Qwen3VL32B,
         WhichModel::DeepSeekOCR,
         WhichModel::DeepSeekOCR2,
         WhichModel::HunyuanOCR,
@@ -471,13 +471,21 @@ fn run_run(args: RunArgs) -> anyhow::Result<()> {
             use aha::exec::lfm2::Lfm2Exec;
             Lfm2Exec::run(&input, output.as_deref(), &weight_path)?;
         }
-        WhichModel::Qwen2_5vl3B => {
-            use aha::exec::qwen2_5vl::Qwen2_5vlExec;
-            Qwen2_5vlExec::run(&input, output.as_deref(), &weight_path)?;
+        WhichModel::LFM2_5VL1_6B => {
+            use aha::exec::lfm2vl::Lfm2VLExec;
+            Lfm2VLExec::run(&input, output.as_deref(), &weight_path)?;
         }
-        WhichModel::Qwen2_5vl7B => {
-            use aha::exec::qwen2_5vl::Qwen2_5vlExec;
-            Qwen2_5vlExec::run(&input, output.as_deref(), &weight_path)?;
+        WhichModel::LFM2VL1_6B => {
+            use aha::exec::lfm2vl::Lfm2VLExec;
+            Lfm2VLExec::run(&input, output.as_deref(), &weight_path)?;
+        }
+        WhichModel::Qwen2_5VL3B => {
+            use aha::exec::qwen2_5vl::Qwen2_5VLExec;
+            Qwen2_5VLExec::run(&input, output.as_deref(), &weight_path)?;
+        }
+        WhichModel::Qwen2_5VL7B => {
+            use aha::exec::qwen2_5vl::Qwen2_5VLExec;
+            Qwen2_5VLExec::run(&input, output.as_deref(), &weight_path)?;
         }
         WhichModel::Qwen3_0_6B => {
             use aha::exec::qwen3::Qwen3Exec;
@@ -511,21 +519,21 @@ fn run_run(args: RunArgs) -> anyhow::Result<()> {
             use aha::exec::qwen3_asr::Qwen3ASRExec;
             Qwen3ASRExec::run(&input, output.as_deref(), &weight_path)?;
         }
-        WhichModel::Qwen3vl2B => {
-            use aha::exec::qwen3vl::Qwen3vlExec;
-            Qwen3vlExec::run(&input, output.as_deref(), &weight_path)?;
+        WhichModel::Qwen3VL2B => {
+            use aha::exec::qwen3vl::Qwen3VLExec;
+            Qwen3VLExec::run(&input, output.as_deref(), &weight_path)?;
         }
-        WhichModel::Qwen3vl4B => {
-            use aha::exec::qwen3vl::Qwen3vlExec;
-            Qwen3vlExec::run(&input, output.as_deref(), &weight_path)?;
+        WhichModel::Qwen3VL4B => {
+            use aha::exec::qwen3vl::Qwen3VLExec;
+            Qwen3VLExec::run(&input, output.as_deref(), &weight_path)?;
         }
-        WhichModel::Qwen3vl8B => {
-            use aha::exec::qwen3vl::Qwen3vlExec;
-            Qwen3vlExec::run(&input, output.as_deref(), &weight_path)?;
+        WhichModel::Qwen3VL8B => {
+            use aha::exec::qwen3vl::Qwen3VLExec;
+            Qwen3VLExec::run(&input, output.as_deref(), &weight_path)?;
         }
-        WhichModel::Qwen3vl32B => {
-            use aha::exec::qwen3vl::Qwen3vlExec;
-            Qwen3vlExec::run(&input, output.as_deref(), &weight_path)?;
+        WhichModel::Qwen3VL32B => {
+            use aha::exec::qwen3vl::Qwen3VLExec;
+            Qwen3VLExec::run(&input, output.as_deref(), &weight_path)?;
         }
         WhichModel::DeepSeekOCR => {
             use aha::exec::deepseek_ocr::DeepSeekORExec;

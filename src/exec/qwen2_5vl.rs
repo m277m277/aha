@@ -8,9 +8,9 @@ use crate::exec::ExecModel;
 use crate::models::{GenerateModel, qwen2_5vl::generate::Qwen2_5VLGenerateModel};
 use crate::utils::get_file_path;
 
-pub struct Qwen2_5vlExec;
+pub struct Qwen2_5VLExec;
 
-impl ExecModel for Qwen2_5vlExec {
+impl ExecModel for Qwen2_5VLExec {
     fn run(input: &[String], output: Option<&str>, weight_path: &str) -> Result<()> {
         let input_text = &input[0];
         let target_text = if input_text.starts_with("file://") {

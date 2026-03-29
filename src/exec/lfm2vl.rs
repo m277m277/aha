@@ -1,4 +1,4 @@
-//! LFM2 exec implementation for CLI `run` subcommand
+//! LFM2.5VL exec implementation for CLI `run` subcommand
 
 use std::time::Instant;
 
@@ -6,40 +6,56 @@ use anyhow::{Ok, Result};
 
 use crate::exec::ExecModel;
 use crate::models::GenerateModel;
-use crate::models::lfm2::generate::Lfm2GenerateModel;
+use crate::models::lfm2vl::generate::Lfm2VLGenerateModel;
 use crate::utils::get_file_path;
 
-pub struct Lfm2Exec;
+pub struct Lfm2VLExec;
 
-impl ExecModel for Lfm2Exec {
+impl ExecModel for Lfm2VLExec {
     fn run(input: &[String], output: Option<&str>, weight_path: &str) -> Result<()> {
         let input_text = &input[0];
         let target_text = if input_text.starts_with("file://") {
-            // let path = &input[7..];
             let path = get_file_path(input_text)?;
             std::fs::read_to_string(path)?
         } else {
-            input_text.to_string()
+            input_text.clone()
         };
-
+        let url = &input[1];
+        let input_url = if url.starts_with("http://")
+            || url.starts_with("https://")
+            || url.starts_with("file://")
+        {
+            url.clone()
+        } else {
+            format!("file://{}", url)
+        };
         let i_start = Instant::now();
-        let mut model = Lfm2GenerateModel::init(weight_path, None, None)?;
+        let mut model = Lfm2VLGenerateModel::init(weight_path, None, None)?;
         let i_duration = i_start.elapsed();
         println!("Time elapsed in load model is: {:?}", i_duration);
 
         let message = format!(
             r#"{{
-            "temperature": 0.3,
-            "top_p": 0.8,
-            "model": "lfm2",
+            "model": "lfm2.5vl",
             "messages": [
                 {{
                     "role": "user",
-                    "content": "{}"
+                    "content": [
+                        {{
+                            "type": "image",
+                            "image_url": {{
+                                "url": "{}"
+                            }}
+                        }},
+                        {{
+                            "type": "text", 
+                            "text": "{}"
+                        }}
+                    ]
                 }}
             ]
         }}"#,
-            target_text.replace('"', "\\\"")
+            input_url, target_text
         );
         let mes = serde_json::from_str(&message)?;
 
@@ -48,7 +64,6 @@ impl ExecModel for Lfm2Exec {
         let i_duration = i_start.elapsed();
         println!("Time elapsed in generate is: {:?}", i_duration);
 
-        // Print result
         println!("Result: {:?}", result);
 
         if let Some(out) = output {

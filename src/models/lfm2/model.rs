@@ -197,7 +197,7 @@ impl Lfm2DecoderLayer {
 }
 
 pub struct Lfm2Decoder {
-    embed_tokens: Embedding,
+    pub embed_tokens: Embedding,
     layers: Vec<Lfm2DecoderLayer>,
     // rotary_emb: RoPE,
     pos_emb: RoPE,

@@ -8,8 +8,8 @@ fn test_model_type_classification() {
     // Since get_model_type and get_model_id are private to api.rs,
     // we document the expected behavior here for reference:
     //
-    // LLM models: MiniCPM4_0_5B, Qwen2_5vl3B, Qwen2_5vl7B, Qwen3_0_6B,
-    //             Qwen3vl2B, Qwen3vl4B, Qwen3vl8B, Qwen3vl32B
+    // LLM models: MiniCPM4_0_5B, Qwen2_5VL3B, Qwen2_5VL7B, Qwen3_0_6B,
+    //             Qwen3VL2B, Qwen3VL4B, Qwen3VL8B, Qwen3VL32B
     // OCR models: DeepSeekOCR, HunyuanOCR, PaddleOCRVL
     // ASR models: Qwen3ASR0_6B, Qwen3ASR1_7B, GlmASRNano2512, FunASRNano2512
     // Image models: RMBG2_0, VoxCPM, VoxCPM1_5
@@ -17,13 +17,13 @@ fn test_model_type_classification() {
     // This test documents the expected model type classification
     let llm_models = [
         WhichModel::MiniCPM4_0_5B,
-        WhichModel::Qwen2_5vl3B,
-        WhichModel::Qwen2_5vl7B,
+        WhichModel::Qwen2_5VL3B,
+        WhichModel::Qwen2_5VL7B,
         WhichModel::Qwen3_0_6B,
-        WhichModel::Qwen3vl2B,
-        WhichModel::Qwen3vl4B,
-        WhichModel::Qwen3vl8B,
-        WhichModel::Qwen3vl32B,
+        WhichModel::Qwen3VL2B,
+        WhichModel::Qwen3VL4B,
+        WhichModel::Qwen3VL8B,
+        WhichModel::Qwen3VL32B,
     ];
 
     let ocr_models = [

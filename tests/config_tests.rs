@@ -1,5 +1,13 @@
 use aha::models::{
-    deepseek_ocr::config::DeepseekOCRConfig, hunyuan_ocr::config::HunYuanVLConfig, lfm2::config::Lfm2Config, lfm2vl::config::{Lfm2ProcessorConfig, Lfm2VLConfig}, minicpm4::config::MiniCPM4Config, paddleocr_vl::config::PaddleOCRVLConfig, qwen2_5vl::config::Qwen2_5VLConfig, qwen3vl::config::Qwen3VLConfig, voxcpm::config::VoxCPMConfig
+    deepseek_ocr::config::DeepseekOCRConfig,
+    hunyuan_ocr::config::HunYuanVLConfig,
+    lfm2::config::Lfm2Config,
+    lfm2vl::config::{Lfm2ProcessorConfig, Lfm2VLConfig},
+    minicpm4::config::MiniCPM4Config,
+    paddleocr_vl::config::PaddleOCRVLConfig,
+    qwen2_5vl::config::Qwen2_5VLConfig,
+    qwen3vl::config::Qwen3VLConfig,
+    voxcpm::config::VoxCPMConfig,
 };
 use anyhow::Result;
 
@@ -104,7 +112,8 @@ fn lfm2vl_config() -> Result<()> {
     let config: Lfm2VLConfig = serde_json::from_slice(&std::fs::read(config_path)?)?;
     println!("{:?}", config);
     let processor_config_path = model_path.to_string() + "/processor_config.json";
-    let processor_config: Lfm2ProcessorConfig = serde_json::from_slice(&std::fs::read(processor_config_path)?)?;
+    let processor_config: Lfm2ProcessorConfig =
+        serde_json::from_slice(&std::fs::read(processor_config_path)?)?;
     println!("{:?}", processor_config);
     Ok(())
 }

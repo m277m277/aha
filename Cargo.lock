@@ -44,7 +44,7 @@ dependencies = [
  "num",
  "rayon",
  "realfft",
- "reqwest 0.12.28",
+ "reqwest 0.13.2",
  "rocket",
  "sentencepiece",
  "serde",
@@ -2805,9 +2805,9 @@ dependencies = [
 
 [[package]]
 name = "modelscope"
-version = "0.1.4"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c0ce1b3f708ede609c998fc460d5dce1b8b9458f99d71715fc8735f8335d8f3"
+checksum = "e70d3712581a1c6148246dc7cefd63d2dbb3a40ba70602170adbec34bb7319bf"
 dependencies = [
  "anyhow",
  "clap",
@@ -3810,21 +3810,16 @@ checksum = "eddd3ca559203180a307f12d114c268abf583f59b03cb906fd0b3ff8646c1147"
 dependencies = [
  "base64 0.22.1",
  "bytes",
- "encoding_rs",
- "futures-channel",
  "futures-core",
  "futures-util",
- "h2 0.4.13",
  "http 1.4.0",
  "http-body 1.0.1",
  "http-body-util",
  "hyper 1.8.1",
- "hyper-rustls",
  "hyper-tls",
  "hyper-util",
  "js-sys",
  "log",
- "mime",
  "mime_guess",
  "native-tls",
  "percent-encoding",
@@ -3858,6 +3853,7 @@ dependencies = [
  "cookie",
  "cookie_store",
  "encoding_rs",
+ "futures-channel",
  "futures-core",
  "futures-util",
  "h2 0.4.13",

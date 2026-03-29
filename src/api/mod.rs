@@ -249,8 +249,10 @@ fn which_model_to_id(which_model: WhichModel) -> &'static str {
         WhichModel::MiniCPM4_0_5B => "minicpm4-0.5b",
         WhichModel::LFM2_1_2B => "lfm2-1.2b",
         WhichModel::LFM2_5_1_2BInstruct => "lfm2.5-1.2b-instruct",
-        WhichModel::Qwen2_5vl3B => "qwen2.5vl-3b",
-        WhichModel::Qwen2_5vl7B => "qwen2.5vl-7b",
+        WhichModel::LFM2_5VL1_6B => "lfm2.5-vl-1.6b",
+        WhichModel::LFM2VL1_6B => "lfm2-vl-1.6b",
+        WhichModel::Qwen2_5VL3B => "qwen2.5vl-3b",
+        WhichModel::Qwen2_5VL7B => "qwen2.5vl-7b",
         WhichModel::Qwen3_0_6B => "qwen3-0.6b",
         WhichModel::Qwen3_5_0_8B => "qwen3.5-0.8b",
         WhichModel::Qwen3_5_2B => "qwen3.5-2b",
@@ -259,10 +261,10 @@ fn which_model_to_id(which_model: WhichModel) -> &'static str {
         WhichModel::Qwen3_5Gguf => "qwen3.5-gguf",
         WhichModel::Qwen3ASR0_6B => "qwen3asr-0.6b",
         WhichModel::Qwen3ASR1_7B => "qwen3asr-1.7b",
-        WhichModel::Qwen3vl2B => "qwen3vl-2b",
-        WhichModel::Qwen3vl4B => "qwen3vl-4b",
-        WhichModel::Qwen3vl8B => "qwen3vl-8b",
-        WhichModel::Qwen3vl32B => "qwen3vl-32b",
+        WhichModel::Qwen3VL2B => "qwen3vl-2b",
+        WhichModel::Qwen3VL4B => "qwen3vl-4b",
+        WhichModel::Qwen3VL8B => "qwen3vl-8b",
+        WhichModel::Qwen3VL32B => "qwen3vl-32b",
         WhichModel::DeepSeekOCR => "deepseek-ocr",
         WhichModel::DeepSeekOCR2 => "deepseek-ocr2",
         WhichModel::HunyuanOCR => "hunyuan-ocr",
@@ -281,12 +283,12 @@ fn which_model_to_id(which_model: WhichModel) -> &'static str {
 fn which_model_to_owner(which_model: WhichModel) -> &'static str {
     match which_model {
         WhichModel::MiniCPM4_0_5B => "OpenBMB",
-        WhichModel::Qwen2_5vl3B | WhichModel::Qwen2_5vl7B => "Qwen",
+        WhichModel::Qwen2_5VL3B | WhichModel::Qwen2_5VL7B => "Qwen",
         WhichModel::Qwen3_0_6B | WhichModel::Qwen3ASR0_6B | WhichModel::Qwen3ASR1_7B => "Qwen",
-        WhichModel::Qwen3vl2B
-        | WhichModel::Qwen3vl4B
-        | WhichModel::Qwen3vl8B
-        | WhichModel::Qwen3vl32B
+        WhichModel::Qwen3VL2B
+        | WhichModel::Qwen3VL4B
+        | WhichModel::Qwen3VL8B
+        | WhichModel::Qwen3VL32B
         | WhichModel::Qwen3_5Gguf => "Qwen",
         WhichModel::Qwen3_5_0_8B
         | WhichModel::Qwen3_5_2B
@@ -299,7 +301,10 @@ fn which_model_to_owner(which_model: WhichModel) -> &'static str {
         WhichModel::VoxCPM | WhichModel::VoxCPM1_5 => "OpenBMB",
         WhichModel::GlmASRNano2512 | WhichModel::GlmOCR => "ZhipuAI",
         WhichModel::FunASRNano2512 => "FunAudioLLM",
-        WhichModel::LFM2_1_2B | WhichModel::LFM2_5_1_2BInstruct => "LiquidAI",
+        WhichModel::LFM2_1_2B
+        | WhichModel::LFM2_5_1_2BInstruct
+        | WhichModel::LFM2_5VL1_6B
+        | WhichModel::LFM2VL1_6B => "LiquidAI",
     }
 }
 
@@ -380,13 +385,13 @@ mod tests {
     #[test]
     fn test_get_model_type_llm() {
         assert_eq!(WhichModel::Qwen3_0_6B.model_type(), "llm");
-        assert_eq!(WhichModel::Qwen3vl2B.model_type(), "llm");
+        assert_eq!(WhichModel::Qwen3VL2B.model_type(), "llm");
         assert_eq!(WhichModel::MiniCPM4_0_5B.model_type(), "llm");
-        assert_eq!(WhichModel::Qwen2_5vl3B.model_type(), "llm");
-        assert_eq!(WhichModel::Qwen2_5vl7B.model_type(), "llm");
-        assert_eq!(WhichModel::Qwen3vl4B.model_type(), "llm");
-        assert_eq!(WhichModel::Qwen3vl8B.model_type(), "llm");
-        assert_eq!(WhichModel::Qwen3vl32B.model_type(), "llm");
+        assert_eq!(WhichModel::Qwen2_5VL3B.model_type(), "llm");
+        assert_eq!(WhichModel::Qwen2_5VL7B.model_type(), "llm");
+        assert_eq!(WhichModel::Qwen3VL4B.model_type(), "llm");
+        assert_eq!(WhichModel::Qwen3VL8B.model_type(), "llm");
+        assert_eq!(WhichModel::Qwen3VL32B.model_type(), "llm");
     }
 
     #[test]
@@ -407,6 +412,10 @@ mod tests {
     #[test]
     fn test_get_model_type_image() {
         assert_eq!(WhichModel::RMBG2_0.model_type(), "image");
+    }
+
+    #[test]
+    fn test_get_model_type_tts() {
         assert_eq!(WhichModel::VoxCPM.model_type(), "image");
         assert_eq!(WhichModel::VoxCPM1_5.model_type(), "image");
     }

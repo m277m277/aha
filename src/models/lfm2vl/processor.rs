@@ -33,17 +33,24 @@ pub struct Lfm2VLProcessor {
     image_thumbnail_token: String,
 }
 
+#[allow(clippy::type_complexity)]
 impl Lfm2VLProcessor {
     pub fn new(path: &str, dtype: DType, device: &Device) -> Result<Self> {
-        let path = path.to_string();
         assert!(
-            std::path::Path::new(&path).exists(),
+            std::path::Path::new(path).exists(),
             "model path file not exists"
         );
-        let processor_cfg_path = path + "/processor_config.json";
-        let processor_cfg: Lfm2ProcessorConfig =
-            serde_json::from_slice(&std::fs::read(processor_cfg_path)?)?;
-        let image_config = processor_cfg.image_processor;
+        let processor_cfg_path = path.to_string() + "/processor_config.json";
+        let processor_cfg =
+            serde_json::from_slice::<Lfm2ProcessorConfig>(&std::fs::read(processor_cfg_path)?);
+
+        let image_config = match processor_cfg {
+            Ok(cfg) => cfg.image_processor,
+            Err(_) => {
+                let processor_cfg_path = path.to_string() + "/preprocessor_config.json";
+                serde_json::from_slice::<Lfm2ImageConfig>(&std::fs::read(processor_cfg_path)?)?
+            }
+        };
         // 256
         let max_thumbnail_image_patches =
             image_config.max_image_tokens * image_config.downsample_factor.pow(2);
@@ -160,7 +167,7 @@ impl Lfm2VLProcessor {
         let (new_height, new_width) = img_smart_resize(
             height,
             width,
-            self.total_factor as u32,
+            self.total_factor,
             self.smart_resize_min_pixels as u32,
             self.smart_resize_max_pixels as u32,
         )?;
@@ -331,7 +338,6 @@ impl Lfm2VLProcessor {
         ) = self.process_imgs(imgs)?;
         let text =
             self.expand_text_with_placeholders(text, num_cols_list, num_rows_list, image_size_list);
-
         Ok((pixel_values, pixel_attention_mask, spatial_shapes, text))
     }
 }
