@@ -10,8 +10,8 @@ use candle_nn::{
 use crate::{
     models::{
         common::{
-            eager_attention_forward, get_layer_norm,
             gguf::{Gguf, ProjKind, TwoLinearMLPGguf},
+            modules::{eager_attention_forward, get_layer_norm},
         },
         qwen3::model::Qwen3DecoderLayer,
         qwen3vl::config::{

@@ -1,12 +1,15 @@
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use candle_core::{D, IndexOp, Tensor};
 use candle_nn::{Conv1d, LayerNorm, Linear, Module, VarBuilder, linear, ops::softmax_last_dim};
 
 use crate::{
     models::{
         common::{
-            NaiveAttention, TwoLinearMLP, conv1d_depthwise, eager_attention_forward, get_conv1d,
-            get_layer_norm,
+            InferenceModel,
+            modules::{
+                NaiveAttention, TwoLinearMLP, conv1d_depthwise, eager_attention_forward,
+                get_conv1d, get_layer_norm,
+            },
         },
         fun_asr_nano::config::FunASRNanoConfig,
         qwen3::{config::Qwen3Config, model::Qwen3Model},
@@ -577,9 +580,15 @@ pub struct FunAsrNanoModel {
     audio_encoder: SenseVoiceEncoderSmall,
     audio_adaptor: AudioAdaptor,
     llm: Qwen3Model,
+    stop_token_ids: Vec<u32>,
 }
 impl FunAsrNanoModel {
-    pub fn new(vb: VarBuilder, config: &FunASRNanoConfig, llm_cfg: &Qwen3Config) -> Result<Self> {
+    pub fn new(
+        vb: VarBuilder,
+        config: &FunASRNanoConfig,
+        llm_cfg: &Qwen3Config,
+        eos_ids: Vec<u32>,
+    ) -> Result<Self> {
         let input_size = config.frontend_conf.lfr_m * config.frontend_conf.n_mels;
         let audio_encoder = SenseVoiceEncoderSmall::new(
             vb.pp("audio_encoder"),
@@ -607,6 +616,7 @@ impl FunAsrNanoModel {
             audio_encoder,
             audio_adaptor,
             llm,
+            stop_token_ids: eos_ids,
         })
     }
 
@@ -637,5 +647,40 @@ impl FunAsrNanoModel {
 
     pub fn clear_kv_cache(&mut self) {
         self.llm.clear_kv_cache();
+    }
+}
+
+impl InferenceModel for FunAsrNanoModel {
+    fn forward_initial(
+        &mut self,
+        input_ids: &Tensor,
+        seqlen_offset: usize,
+        data: crate::models::common::MultiModalData,
+    ) -> Result<Tensor> {
+        if data.data_vec.len() != 2 {
+            return Err(anyhow!(
+                "FunAsrNano process data error, must have speech, fbank_mask"
+            ));
+        }
+        let speech = &data.data_vec[0];
+        let fbank_mask = &data.data_vec[1];
+        self.forward(
+            input_ids,
+            speech.as_ref(),
+            fbank_mask.as_ref(),
+            seqlen_offset,
+        )
+    }
+
+    fn forward_step(&mut self, input_ids: &Tensor, seqlen_offset: usize) -> Result<Tensor> {
+        self.forward(input_ids, None, None, seqlen_offset)
+    }
+
+    fn clear_cache(&mut self) {
+        self.clear_kv_cache();
+    }
+
+    fn stop_token_ids(&self) -> Vec<u32> {
+        self.stop_token_ids.clone()
     }
 }

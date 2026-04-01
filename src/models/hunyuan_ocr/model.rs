@@ -7,7 +7,9 @@ use candle_nn::{
 
 use crate::{
     models::{
-        common::{GateUpDownMLP, NaiveAttnTwoLinearMLPBlock, eager_attention_forward, get_conv2d},
+        common::modules::{
+            GateUpDownMLP, NaiveAttnTwoLinearMLPBlock, eager_attention_forward, get_conv2d,
+        },
         hunyuan_ocr::config::{HunYuanVLConfig, HunYuanVLVisionConfig},
     },
     position_embed::rope::{RoPE, apply_rotary_pos_emb, get_xd_cos_sin},

@@ -6,7 +6,7 @@ use candle_nn::{
 };
 
 use crate::{
-    models::common::{
+    models::common::modules::{
         Conv2dWithBN, TwoLinearMLP, deform_conv2d_kernel, get_batch_norm, get_conv2d,
         get_layer_norm,
     },

@@ -4,7 +4,7 @@ use candle_nn::{Embedding, Linear, Module, RmsNorm, VarBuilder, embedding, rms_n
 
 use crate::{
     models::{
-        common::{GateUpDownMLP, NaiveAttention},
+        common::modules::{GateUpDownMLP, NaiveAttention},
         minicpm4::config::MiniCPM4Config,
     },
     position_embed::rope::compute_default_rope_parameters,

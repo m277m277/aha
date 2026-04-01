@@ -1,3 +1,4 @@
+use crate::models::common::generate::get_logit_processor;
 use crate::params::chat::{
     ChatCompletionChunkResponse, ChatCompletionParameters, ChatCompletionResponse,
 };
@@ -13,7 +14,7 @@ use crate::models::paddleocr_vl::processor::PaddleOCRVLProcessor;
 use crate::utils::tensor_utils::get_equal_mask;
 use crate::utils::{
     build_completion_chunk_response, build_completion_response, find_type_files, get_device,
-    get_dtype, get_logit_processor,
+    get_dtype,
 };
 use crate::{chat_template::ChatTemplate, models::GenerateModel, tokenizer::TokenizerModel};
 

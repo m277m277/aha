@@ -5,6 +5,9 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/spec/v2.0.0.html)。
 
+### 2026-04-01
+- 重构 deepseek_ocr/fun_asr_nano 生成代码
+
 ### 2026-03-31
 - 新增 server 和 cli 模块
 - aha模型名称使用 modelscope id 替换

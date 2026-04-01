@@ -138,6 +138,8 @@ pub struct ChatCompletionParameters {
     /// So 0.1 means only the tokens comprising the top 10% probability mass are considered.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub top_p: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub top_k: Option<usize>,
     /// A list of tools the model may call. Currently, only functions are supported as a tool.
     /// Use this to provide a list of functions the model may generate JSON inputs for.
     #[serde(skip_serializing_if = "Option::is_none")]

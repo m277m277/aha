@@ -4,7 +4,7 @@ use candle_nn::{Conv1d, LayerNorm, Linear, Module, VarBuilder, linear, linear_no
 
 use crate::{
     models::{
-        common::{
+        common::modules::{
             LlamaForCausalLM, TwoLinearMLP, eager_attention_forward, get_conv1d, get_layer_norm,
         },
         glm_asr_nano::config::{GlmAsrAudioConfig, GlmAsrNanoConfig},

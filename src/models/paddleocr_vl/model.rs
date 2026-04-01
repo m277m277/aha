@@ -8,7 +8,7 @@ use num::integer::Roots;
 
 use crate::{
     models::{
-        common::{
+        common::modules::{
             NaiveAttnGateUpDownMLPBlock, NaiveAttnTwoLinearMLPBlock, get_conv2d, get_layer_norm,
         },
         paddleocr_vl::config::{

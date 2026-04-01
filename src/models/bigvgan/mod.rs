@@ -5,7 +5,7 @@ use candle_nn::{Init, VarBuilder};
 use crate::{
     models::{
         bigvgan::config::BigVGANConfig,
-        common::{WNConv1d, WNConvTranspose1d},
+        common::modules::{WNConv1d, WNConvTranspose1d},
     },
     utils::tensor_utils::pad_replicate_last_dim,
 };

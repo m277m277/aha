@@ -10,9 +10,8 @@ use candle_nn::{
 use crate::{
     models::{
         common::{
-            conv1d_depthwise, eager_attention_forward, get_conv1d,
             gguf::{GateUpDownMLPGguf, Gguf, ProjKind, QuantizedLinear},
-            softplus,
+            modules::{conv1d_depthwise, eager_attention_forward, get_conv1d, softplus},
         },
         qwen3_5::config::{Qwen3_5Config, Qwen3_5TextConfig},
         qwen3vl::model::Qwen3VLVisionModel,

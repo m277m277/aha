@@ -6,7 +6,7 @@ use candle_nn::{
 
 use crate::{
     models::{
-        common::{WNConv1d, conv1d_depthwise, get_conv1d, get_layer_norm},
+        common::modules::{WNConv1d, conv1d_depthwise, get_conv1d, get_layer_norm},
         mask_gct::config::SemanticCodec,
     },
     utils::{interpolate::interpolate_nearest_1d, tensor_utils::l2_normalize},

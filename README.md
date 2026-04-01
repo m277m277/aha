@@ -46,6 +46,8 @@ aha is a high-performance, cross-platform AI inference engine built with Rust an
 - **🧠 Attention Optimization** - Optional Flash Attention support for optimized long sequence processing
 
 ## Changelog
+### 2026-04-01
+- refactor deepseek_ocr/fun_asr_nano generate code 
 
 ### 2026-03-31
 - add server adn cli mod

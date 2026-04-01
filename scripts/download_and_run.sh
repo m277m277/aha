@@ -28,7 +28,7 @@ show_help() {
     echo "  Tencent-Hunyuan/HunyuanOCR"
     echo "  PaddlePaddle/PaddleOCR-VL"
     echo "  AI-ModelScope/RMBG-2.0"
-    echo "  voxcpm"
+    echo "  OpenBMB/VoxCPM-0.5B"
     echo "  OpenBMB/VoxCPM1.5"
     echo "  ZhipuAI/GLM-ASR-Nano-2512"
     echo "  FunAudioLLM/Fun-ASR-Nano-2512"
@@ -88,7 +88,7 @@ case $MODEL_ALIAS in
     "AI-ModelScope/RMBG-2.0")
         MODEL_ID="briaai/RMBG-2.0"
         ;;
-    "voxcpm")
+    "OpenBMB/VoxCPM-0.5B")
         MODEL_ID="openbmb/VoxCPM-0.5B"
         ;;
     "OpenBMB/VoxCPM1.5")

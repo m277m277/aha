@@ -1,6 +1,6 @@
 use crate::{
     models::{
-        common::{GateUpDownMLP, QKNormAttention, conv1d_depthwise, get_conv1d},
+        common::modules::{GateUpDownMLP, QKNormAttention, conv1d_depthwise, get_conv1d},
         lfm2::config::Lfm2Config,
     },
     position_embed::rope::RoPE,

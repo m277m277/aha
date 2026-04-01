@@ -1,3 +1,4 @@
+use crate::models::common::generate::get_logit_processor;
 use crate::params::chat::{
     ChatCompletionChunkResponse, ChatCompletionParameters, ChatCompletionResponse,
 };
@@ -10,7 +11,7 @@ use rocket::futures::Stream;
 use crate::models::qwen2_5vl::config::Qwen2_5VLConfig;
 use crate::utils::{
     build_completion_chunk_response, build_completion_response, find_type_files, get_device,
-    get_dtype, get_logit_processor,
+    get_dtype,
 };
 use crate::{
     chat_template::ChatTemplate,

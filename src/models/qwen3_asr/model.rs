@@ -7,7 +7,7 @@ use candle_nn::{
 
 use crate::{
     models::{
-        common::{NaiveAttention, get_conv2d, get_layer_norm},
+        common::modules::{NaiveAttention, get_conv2d, get_layer_norm},
         qwen3::model::Qwen3DecoderLayer,
         qwen3_asr::{
             config::{

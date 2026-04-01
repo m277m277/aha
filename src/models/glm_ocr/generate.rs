@@ -1,6 +1,7 @@
 //! GLM-OCR Inference and Generation
-use crate::params::chat::{
-    ChatCompletionChunkResponse, ChatCompletionParameters, ChatCompletionResponse,
+use crate::{
+    models::common::generate::get_logit_processor,
+    params::chat::{ChatCompletionChunkResponse, ChatCompletionParameters, ChatCompletionResponse},
 };
 use anyhow::{Result, anyhow};
 use candle_core::{DType, Device, IndexOp, Tensor};
@@ -21,7 +22,7 @@ use crate::{
     tokenizer::TokenizerModel,
     utils::{
         build_completion_chunk_response, build_completion_response, extract_user_text,
-        find_type_files, get_device, get_dtype, get_logit_processor, img_utils::extract_image_url,
+        find_type_files, get_device, get_dtype, img_utils::extract_image_url,
     },
 };
 

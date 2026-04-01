@@ -127,10 +127,6 @@ async fn deepseek_ocr_stream() -> Result<()> {
                     }
                 ]
             },
-            {
-                "role": "assistant",
-                "content": ""
-            }
         ],
         "metadata": {"base_size": "640", "image_size": "640", "crop_mode": "false"}
     }

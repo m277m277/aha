@@ -13,8 +13,11 @@ use candle_transformers::models::segment_anything::LayerNorm2d;
 use crate::{
     models::{
         common::{
-            GateUpDownMLP, NaiveAttention, TwoLinearMLP, eager_attention_forward, get_conv2d,
-            get_layer_norm,
+            InferenceModel,
+            modules::{
+                GateUpDownMLP, NaiveAttention, QKVCatAttention, TwoLinearMLP,
+                eager_attention_forward, get_conv2d, get_layer_norm,
+            },
         },
         deepseek_ocr::config::{DeepseekOCRConfig, DeepseekV2Config},
         qwen2::{Qwen2Config, Qwen2Decoder},
@@ -608,45 +611,6 @@ impl CLIPVisionEmbeddings {
     }
 }
 
-pub struct NoTPAttention {
-    num_heads: usize,
-    head_dim: usize,
-    qkv_proj: Linear,
-    out_proj: Linear,
-    scaling: f64,
-}
-
-impl NoTPAttention {
-    pub fn new(vb: VarBuilder, hidden_size: usize, num_heads: usize) -> Result<Self> {
-        let qkv_proj = linear(hidden_size, hidden_size * 3, vb.pp("qkv_proj"))?;
-        let out_proj = linear(hidden_size, hidden_size, vb.pp("out_proj"))?;
-        let head_dim = hidden_size / num_heads;
-        let scaling = 1.0 / (head_dim as f64).sqrt();
-        Ok(Self {
-            num_heads,
-            head_dim,
-            qkv_proj,
-            out_proj,
-            scaling,
-        })
-    }
-
-    pub fn forward(&self, xs: &Tensor) -> Result<Tensor> {
-        let (bs, seq_len, _) = xs.dims3()?;
-        let qkv = self.qkv_proj.forward(xs)?;
-        let qkv = qkv
-            .reshape((bs, seq_len, 3, self.num_heads, self.head_dim))?
-            .permute((2, 0, 3, 1, 4))?;
-        let q = qkv.i(0)?.contiguous()?;
-        let k = qkv.i(1)?.contiguous()?;
-        let v = qkv.i(2)?.contiguous()?;
-        let output = eager_attention_forward(&q, &k, &v, None, None, self.scaling)?;
-        let output = output.reshape((bs, seq_len, ()))?;
-        let output = self.out_proj.forward(&output)?;
-        Ok(output)
-    }
-}
-
 pub struct NoTPFeedForward {
     fc1: Linear,
     fc2: Linear,
@@ -668,7 +632,7 @@ impl NoTPFeedForward {
 }
 
 pub struct NoTPTransformerBlock {
-    self_attn: NoTPAttention,
+    self_attn: QKVCatAttention,
     mlp: NoTPFeedForward,
     layer_norm1: LayerNorm,
     layer_norm2: LayerNorm,
@@ -681,7 +645,15 @@ impl NoTPTransformerBlock {
         ffn_hidden_size: usize,
         eps: f64,
     ) -> Result<Self> {
-        let self_attn = NoTPAttention::new(vb.pp("self_attn"), hidden_size, num_heads)?;
+        let self_attn = QKVCatAttention::new(
+            vb.pp("self_attn"),
+            hidden_size,
+            num_heads,
+            None,
+            true,
+            Some("qkv_proj"),
+            Some("out_proj"),
+        )?;
         let mlp = NoTPFeedForward::new(vb.pp("mlp"), hidden_size, ffn_hidden_size)?;
         let layer_norm1 = get_layer_norm(vb.pp("layer_norm1"), eps, hidden_size, true)?;
         let layer_norm2 = get_layer_norm(vb.pp("layer_norm2"), eps, hidden_size, true)?;
@@ -695,7 +667,7 @@ impl NoTPTransformerBlock {
 
     pub fn forward(&self, xs: &Tensor) -> Result<Tensor> {
         let x = self.layer_norm1.forward(xs)?;
-        let x = self.self_attn.forward(&x)?;
+        let x = self.self_attn.forward(&x, None, None, None, false, false)?;
         let res = x.add(xs)?;
         let x = self.layer_norm2.forward(&res)?;
         let x = self.mlp.forward(&x)?;
@@ -1204,6 +1176,7 @@ pub struct DeepseekOCRModel {
     image_newline: Option<Tensor>,
     view_seperator: Tensor,
     lm_head: Linear,
+    stop_token_ids: Vec<u32>,
 }
 
 impl DeepseekOCRModel {
@@ -1262,6 +1235,7 @@ impl DeepseekOCRModel {
         let view_seperator = vb_m.get_with_hints(1280, "view_seperator", Init::Const(0.))?;
         let language_model = DeepseekV2Model::new(vb_m, config.language_config.clone())?;
         let lm_head = linear_no_bias(config.hidden_size, config.vocab_size, vb.pp("lm_head"))?;
+        let stop_token_ids = vec![config.eos_token_id, config.bos_token_id];
         Ok(Self {
             // config,
             sam_model,
@@ -1271,6 +1245,7 @@ impl DeepseekOCRModel {
             image_newline,
             view_seperator,
             lm_head,
+            stop_token_ids,
         })
     }
 
@@ -1457,5 +1432,44 @@ impl DeepseekOCRModel {
 
     pub fn clear_kv_cache(&mut self) {
         self.language_model.clear_kv_cache();
+    }
+}
+
+impl InferenceModel for DeepseekOCRModel {
+    fn forward_initial(
+        &mut self,
+        input_ids: &Tensor,
+        seqlen_offset: usize,
+        data: crate::models::common::MultiModalData,
+    ) -> Result<Tensor> {
+        if data.data_vec.len() != 4 {
+            return Err(anyhow!(
+                "DeepseekOCR process data error, must have images_ori, image_crop, images_seq_mask, images_spatial_crop"
+            ));
+        }
+        let images_ori = &data.data_vec[0];
+        let image_crop = &data.data_vec[1];
+        let images_seq_mask = &data.data_vec[2];
+        let images_spatial_crop = &data.data_vec[3];
+        self.forward(
+            input_ids,
+            images_ori.as_ref(),
+            image_crop.as_ref(),
+            images_seq_mask.as_ref(),
+            images_spatial_crop.as_ref(),
+            seqlen_offset,
+        )
+    }
+
+    fn forward_step(&mut self, input_ids: &Tensor, seqlen_offset: usize) -> Result<Tensor> {
+        self.forward(input_ids, None, None, None, None, seqlen_offset)
+    }
+
+    fn clear_cache(&mut self) {
+        self.clear_kv_cache();
+    }
+
+    fn stop_token_ids(&self) -> Vec<u32> {
+        self.stop_token_ids.clone()
     }
 }

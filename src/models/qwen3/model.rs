@@ -6,7 +6,7 @@ use candle_nn::{
 
 use crate::{
     models::{
-        common::{GateUpDownMLP, QKNormAttention},
+        common::modules::{GateUpDownMLP, QKNormAttention},
         qwen3::config::Qwen3Config,
     },
     position_embed::rope::RoPE,

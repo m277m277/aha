@@ -5,7 +5,7 @@ use candle_nn::{
 };
 
 use crate::{
-    models::common::{GateUpDownMLP, eager_attention_forward},
+    models::common::modules::{GateUpDownMLP, eager_attention_forward},
     position_embed::rope::{RoPE, apply_rotary_pos_emb},
 };
 

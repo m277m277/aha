@@ -1,3 +1,4 @@
+use crate::models::common::generate::get_logit_processor;
 use crate::params::chat::{ChatCompletionParameters, ChatCompletionResponse};
 use crate::utils::build_completion_chunk_response;
 use crate::{
@@ -10,9 +11,7 @@ use crate::{
         },
     },
     tokenizer::TokenizerModel,
-    utils::{
-        build_completion_response, find_type_files, get_device, get_dtype, get_logit_processor,
-    },
+    utils::{build_completion_response, find_type_files, get_device, get_dtype},
 };
 use anyhow::Result;
 use candle_core::{DType, Device, Tensor};

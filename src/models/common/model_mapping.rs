@@ -95,6 +95,7 @@ impl WhichModel {
             | WhichModel::Qwen3_0_6B
             | WhichModel::LFM2_1_2B
             | WhichModel::LFM2_5_1_2BInstruct => "llm",
+            // VLM models
             WhichModel::Qwen2_5VL3B
             | WhichModel::Qwen2_5VL7B
             | WhichModel::Qwen3VL2B
@@ -122,6 +123,7 @@ impl WhichModel {
             | WhichModel::FunASRNano2512 => "asr",
             // Image models
             WhichModel::RMBG2_0 => "image",
+            // TTS models
             WhichModel::VoxCPM | WhichModel::VoxCPM1_5 => "tts",
         }
     }

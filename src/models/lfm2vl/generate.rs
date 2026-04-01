@@ -1,4 +1,7 @@
-use crate::params::chat::{ChatCompletionParameters, ChatCompletionResponse};
+use crate::{
+    models::common::generate::get_logit_processor,
+    params::chat::{ChatCompletionParameters, ChatCompletionResponse},
+};
 use anyhow::Result;
 use candle_core::{DType, Device, Tensor};
 use candle_nn::VarBuilder;
@@ -13,7 +16,7 @@ use crate::{
     tokenizer::TokenizerModel,
     utils::{
         build_completion_chunk_response, build_completion_response, find_type_files, get_device,
-        get_dtype, get_logit_processor,
+        get_dtype,
     },
 };
 use rocket::async_stream::stream;

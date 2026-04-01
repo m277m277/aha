@@ -4,7 +4,7 @@ use candle_nn::{Init, Linear, Module, RmsNorm, VarBuilder, linear, linear_no_bia
 
 use crate::{
     models::{
-        common::{GateUpDownMLP, eager_attention_forward},
+        common::modules::{GateUpDownMLP, eager_attention_forward},
         qwen2::Qwen2DecoderLayer,
         qwen2_5vl::config::{Qwen2_5VLConfig, RopeScaling},
     },

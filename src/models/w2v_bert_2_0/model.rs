@@ -7,7 +7,7 @@ use candle_nn::{
 
 use crate::{
     models::{
-        common::{
+        common::modules::{
             GLU, TwoLinearMLP, conv1d_depthwise, eager_attention_forward, get_conv1d,
             get_layer_norm,
         },

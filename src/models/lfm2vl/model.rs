@@ -1,6 +1,6 @@
 use crate::{
     models::{
-        common::{NaiveAttnTwoLinearMLPBlock, get_layer_norm},
+        common::modules::{NaiveAttnTwoLinearMLPBlock, get_layer_norm},
         lfm2::model::Lfm2Decoder,
         lfm2vl::config::{Lfm2VLConfig, Lfm2VLVisionConfig},
     },

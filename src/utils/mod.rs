@@ -26,7 +26,6 @@ use candle_core::{
     pickle::{Object, Stack, TensorInfo, read_all_with_key},
 };
 use candle_nn::VarBuilder;
-use candle_transformers::generation::{LogitsProcessor, Sampling};
 use dirs::home_dir;
 use half::{bf16, f16, slice::HalfFloatSliceExt};
 use modelscope::ModelScope;
@@ -583,10 +582,10 @@ pub fn build_completion_response(
     } else {
         Some(Usage {
             prompt_tokens,
-            prompt_ms: None,
+            prompt_secs: None,
             completion_tokens,
-            completion_ms: None,
-            completion_per_token_ms: None,
+            completion_secs: None,
+            completion_per_token_secs: None,
             completion_tps: None,
             total_tokens: prompt_tokens.unwrap_or(0) + completion_tokens.unwrap_or(0),
             prompt_tokens_details: None,
@@ -601,28 +600,29 @@ pub fn build_completion_response_with_time(
     res: String,
     model_name: &str,
     completion_tokens: Option<u32>,
-    completion_ms: Option<f64>,
+    completion_secs: Option<f64>,
     prompt_tokens: Option<u32>,
-    prompt_ms: Option<f64>,
+    prompt_secs: Option<f64>,
 ) -> ChatCompletionResponse {
     let usage = if prompt_tokens.is_none() && completion_tokens.is_none() {
         None
     } else {
-        let (completion_per_token_ms, completion_tps) = if let Some(prompt_tokens) = prompt_tokens
-            && let Some(prompt_ms) = prompt_ms
+        let (completion_per_token_secs, completion_tps) = if let Some(completion_tokens) =
+            completion_tokens
+            && let Some(completion_secs) = completion_secs
         {
-            let per_token_ms = prompt_ms / prompt_tokens as f64;
-            let tps = prompt_tokens as f64 / (prompt_ms / 1000.0);
-            (Some(per_token_ms), Some(tps))
+            let per_token_secs = completion_secs / completion_tokens as f64;
+            let tps = completion_tokens as f64 / completion_secs;
+            (Some(per_token_secs), Some(tps))
         } else {
             (None, None)
         };
         Some(Usage {
             prompt_tokens,
-            prompt_ms,
+            prompt_secs,
             completion_tokens,
-            completion_ms,
-            completion_per_token_ms,
+            completion_secs,
+            completion_per_token_secs,
             completion_tps,
             total_tokens: prompt_tokens.unwrap_or(0) + completion_tokens.unwrap_or(0),
             prompt_tokens_details: None,
@@ -706,39 +706,6 @@ pub fn build_completion_chunk_response(
     };
     response.choices.push(choice);
     response
-}
-
-pub fn get_logit_processor(
-    temperature: Option<f32>,
-    top_p: Option<f32>,
-    top_k: Option<usize>,
-    seed: u64,
-) -> LogitsProcessor {
-    let temperature = temperature.and_then(|v| if v < 1e-7 { None } else { Some(v) });
-    match top_k {
-        None => LogitsProcessor::new(
-            seed,
-            temperature.map(|temp| temp as f64),
-            top_p.map(|tp| tp as f64),
-        ),
-        Some(k) => {
-            let sampling = match temperature {
-                None => Sampling::ArgMax,
-                Some(temperature) => match top_p {
-                    None => Sampling::TopK {
-                        k,
-                        temperature: temperature as f64,
-                    },
-                    Some(p) => Sampling::TopKThenTopP {
-                        k,
-                        p: p as f64,
-                        temperature: temperature as f64,
-                    },
-                },
-            };
-            LogitsProcessor::from_sampling(seed, sampling)
-        }
-    }
 }
 
 pub fn extract_mes(mes: &ChatCompletionParameters) -> Result<Vec<(String, String)>> {
