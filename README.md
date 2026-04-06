@@ -72,7 +72,7 @@ aha is a high-performance, cross-platform AI inference engine built with Rust an
 - Usage add time info
 - dependencies delete aha_openai_dive,chrono
 
-### v0.2.5 (2026-03-30)
+### 2026-03-30
 - add LFM2.5VL-1.6B
 - add LFM2VL-1.6B
 

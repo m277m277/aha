@@ -28,7 +28,7 @@
 - Usage 增加时间信息
 - 删除 aha_openai_dive, chrono 依赖
 
-### v0.2.5 (2026-03-30)
+### 2026-03-30
 - 新增 LFM2.5VL-1.6B
 - 新增 LFM2VL-1.6B
 
