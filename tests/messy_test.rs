@@ -5,13 +5,15 @@
 // use std::io::{Read, Seek};
 // use std::{io::Cursor, time::Instant};
 
-use aha::{
-    models::common::model_mapping::WhichModel,
-    // utils::{timestamp, timestamp_millis},
-};
+use aha::utils::tensor_utils::get_mask_from_lengths;
 // use aha::utils::tensor_utils::repeat_interleave;
 // use crate::params::chat::ChatCompletionParameters;
-use anyhow::Result;
+use anyhow::{Result};
+use candle_core::Tensor;
+// use kaldi_native_fbank::{
+//     FbankComputer, FbankOptions,
+//     window::{Window, extract_window},
+// };
 // use byteorder::{LittleEndian, ReadBytesExt};
 // use candle_core::Tensor;
 use modelscope::{DownloadOptions, ModelScope};
@@ -39,10 +41,76 @@ async fn download_test() -> Result<()> {
 #[test]
 fn messy_test() -> Result<()> {
     // RUST_BACKTRACE=1 cargo test -F cuda --test messy_test messy_test -r -- --nocapture
-    let model = WhichModel::LFM2_1_2B;
-    println!("model: {:?}, model_id: {}", model, model.as_string());
-    let model_list = WhichModel::model_list();
-    println!("model_list: {:#?}", model_list);
+    let device = aha::Device::Cpu;
+    let input = Tensor::new(&[5u32, 4, 3, 6], &device)?;
+    let mask = get_mask_from_lengths(&input)?;
+    println!("{}", mask);
+    // let audio_path = "file:///home/jhq/python_code/FireRedASR2S/assets/hello_zh.wav";
+    // let device = aha::Device::Cpu;
+    // let wave = load_audio_with_resample(audio_path, &device, Some(16000), true)?;
+    // println!("len: {}", wave);
+    // let wave = wave.squeeze(0)?.to_vec1::<f32>()?;
+    // println!("wave len: {}", wave.len());
+    // let mut opts = FbankOptions::default();
+    // opts.frame_opts.dither = 0.0;
+    // opts.frame_opts.samp_freq = 16000.;
+    // opts.frame_opts.frame_length_ms = 25.;
+    // opts.frame_opts.frame_shift_ms = 10.;
+    // opts.frame_opts.snip_edges = true;
+    // opts.mel_opts.num_bins = 80;
+    // opts.mel_opts.debug_mel = false;
+    // opts.use_energy = false;
+
+    // let mut comp =
+    //     FbankComputer::new(opts.clone()).map_err(|e| anyhow!("fbank comput err: {e}"))?;
+    // let win = Window::new(&opts.frame_opts).unwrap();
+    // let padded = opts.frame_opts.padded_window_size();
+
+    // let mut feats = vec![];
+    // let mut window_buf = vec![0.0; padded];
+    // for frame in 0..230 {
+    //     let raw_log_energy = extract_window(
+    //         0,
+    //         &wave,
+    //         frame,
+    //         &opts.frame_opts,
+    //         Some(&win),
+    //         &mut window_buf,
+    //     )
+    //     .unwrap();
+    //     let mut feat = vec![0.0; comp.dim()];
+    //     comp.compute(raw_log_energy, 1.0, &mut window_buf, &mut feat);
+    //     feats.push(feat);
+    // }
+    // let feats = Tensor::new(feats, &aha::Device::Cpu)?;
+    // println!("feats: {}", feats);
+    // println!("wave len: {}", wave.len());
+    // let mut feats = vec![];
+    // let frame_num = (wave.len() + padded - 1) / padded;
+    // for i in 0..frame_num {
+    //     let mut window_buf = vec![0.0; padded];
+    //     let raw_log_energy =
+    //         extract_window(0, &wave, i, &opts.frame_opts, Some(&win), &mut window_buf)
+    //             .map_err(|_| anyhow!("extract_window  err"))?;
+    //     let mut feat = vec![0.0; comp.dim()];
+    //     comp.compute(raw_log_energy, 1.0, &mut window_buf, &mut feat);
+    //     feats.push(feat);
+    // }
+    // let feats = Tensor::new(feats, &aha::Device::Cpu)?;
+    // println!("feats: {:?}", feats);
+    // let mut window_buf = vec![0.0; padded];
+    // println!("window_buf len: {}", window_buf.len());
+    // let raw_log_energy = extract_window(0, &wave, 0, &opts.frame_opts, Some(&win), &mut window_buf)
+    //     .map_err(|_| anyhow!("extract_window  err"))?;
+
+    // let mut feat = vec![0.0; comp.dim()];
+    // println!("feat len: {}", feat.len());
+    // comp.compute(raw_log_energy, 1.0, &mut window_buf, &mut feat);
+    // println!("{feat:?}");
+    // let model = WhichModel::LFM2_1_2B;
+    // println!("model: {:?}, model_id: {}", model, model.as_string());
+    // let model_list = WhichModel::model_list();
+    // println!("model_list: {:#?}", model_list);
     // println!("当前秒级时间戳: {}", timestamp());
     // println!("当前毫秒级时间戳: {}", timestamp_millis());
 

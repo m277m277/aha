@@ -49,6 +49,9 @@ aha is a high-performance, cross-platform AI inference engine built with Rust an
 - **🧠 Attention Optimization** - Optional Flash Attention support for optimized long sequence processing
 
 ## Changelog
+### 2026-04-15
+- add FireRedVAD
+
 ### 2026-04-10
 - fix LiquidAI/LFM2.5-VL-450M chat_template load bug
 

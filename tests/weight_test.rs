@@ -351,3 +351,62 @@ fn voxcpm2_weight() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn sam3_weight() -> Result<()> {
+    // cargo test -F cuda --test weight_test sam3_weight -r -- --nocapture
+    let save_dir =
+        aha::utils::get_default_save_dir().ok_or(anyhow::anyhow!("Failed to get save dir"))?;
+    let model_path = format!("{}/facebook/sam3/", save_dir);
+    let model_list = find_type_files(&model_path, "safetensors")?;
+    println!("model_list: {:?}", model_list);
+    let device = get_device(None);
+    // let mut dict_to_hashmap = HashMap::new();
+    // let mut dtype = candle_core::DType::F32;
+    for m in model_list {
+        let weights = safetensors::load(m, &device)?;
+        for (key, tensor) in weights.iter() {
+            println!("=== {} === {:?}", key, tensor);
+        }
+    }
+
+    Ok(())
+}
+
+#[test]
+fn sam3_1_weight() -> Result<()> {
+    // cargo test -F cuda --test weight_test sam3_1_weight -r -- --nocapture
+    let save_dir =
+        aha::utils::get_default_save_dir().ok_or(anyhow::anyhow!("Failed to get save dir"))?;
+    let model_path = format!("{}/facebook/sam3.1/", save_dir);
+    let model_list = find_type_files(&model_path, "pt")?;
+    println!("model_list: {:?}", model_list);
+    // let dev = get_device(None);
+    // let mut dict_to_hashmap = HashMap::new();
+    // let mut dtype = candle_core::DType::F32;
+    for m in model_list {
+        let dict = read_all_with_key(m, None)?;
+        // dtype = dict[0].1.dtype();
+        for (k, v) in dict {
+            println!("key: {}, tensor shape: {:?}", k, v);
+            // dict_to_hashmap.insert(k, v);
+        }
+    }
+
+    Ok(())
+}
+
+#[test]
+fn fire_red_vad_weight() -> Result<()> {
+    // cargo test -F cuda --test weight_test fire_red_vad_weight -r -- --nocapture
+    let save_dir =
+        aha::utils::get_default_save_dir().ok_or(anyhow::anyhow!("Failed to get save dir"))?;
+    let model_path = format!("{}/xukaituo/FireRedVAD/VAD/model.safetensors", save_dir);
+    let device = get_device(None);
+    let weights = safetensors::load(model_path, &device)?;
+    for (key, tensor) in weights.iter() {
+        println!("=== {} === {:?}", key, tensor);
+    }
+
+    Ok(())
+}

@@ -1335,6 +1335,44 @@ pub fn conv1d_depthwise(input: &Tensor, weight: &Tensor, bias: Option<&Tensor>) 
     }
 }
 
+pub fn native_conv1d(input: &Tensor, weight: &Tensor, mode: &str) -> Result<Tensor> {
+    // input: shape: (n)
+    // weight: shape: (kernel_size)
+    // mode: 'full', 'same', 'valid'
+    // full : out_len = n + kernel_size - 1
+    // same : out_len = n
+    // valid: out_len = n - kernel_size + 1
+    let kernel_size: usize = weight.dim(0)?;
+    let pad = match mode {
+        "full" => {
+            let pad = kernel_size - 1;
+            input.pad_with_zeros(0, pad, pad)?
+        }
+        "same" => {
+            let pad = (kernel_size - 1) / 2;
+            input.pad_with_zeros(0, pad, pad)?
+        }
+        "valid" => input.clone(),
+        _ => {
+            return Err(anyhow!(
+                "native_conv1d only support mode is 'full', 'same', 'valid'"
+            ));
+        }
+    };
+    let in_len = pad.dim(0)?;
+    let len_out = in_len - kernel_size + 1;
+    let mut out = pad
+        .narrow(D::Minus1, 0, len_out)?
+        .broadcast_mul(&weight.narrow(D::Minus1, 0, 1)?)?;
+    for k in 1..kernel_size {
+        out = (out
+            + pad
+                .narrow(D::Minus1, k, len_out)?
+                .broadcast_mul(&weight.narrow(D::Minus1, k, 1)?)?)?;
+    }
+    Ok(out)
+}
+
 pub fn log10(t: &Tensor) -> Result<Tensor> {
     Ok(t.log()?.affine(1.0 / 10.0_f64.ln(), 0.0)?)
 }

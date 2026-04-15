@@ -33,6 +33,28 @@ pub fn attn_masked_fill(on_true: &Tensor, mask: &Tensor, on_false: f32) -> Resul
     Ok(filled)
 }
 
+pub fn get_mask_from_lengths(length: &Tensor) -> Result<Tensor> {
+    // length: [5u32, 4, 3, 6]
+    // mask:
+    // [[0, 0, 0, 0, 0, 1],
+    // [0, 0, 0, 0, 1, 1],
+    // [0, 0, 0, 1, 1, 1],
+    // [0, 0, 0, 0, 0, 0]]
+    let n = length.dim(0)?;
+    let t = length.max_all()?.to_scalar::<u32>()? as usize;
+    let mut mask = Tensor::zeros((n, t), DType::U32, length.device())?;
+    for i in 0..n {
+        let index = length.i(i)?.to_scalar::<u32>()? as usize;
+        let len = t - index;
+        if len == 0 {
+            continue;
+        }
+        let slice = Tensor::ones((1, len), DType::U32, length.device())?;
+        mask = mask.slice_assign(&[(i..i + 1), (index..t)], &slice)?;
+    }
+    Ok(mask)
+}
+
 pub fn prepare_mask(mask: &Tensor) -> Result<Tensor> {
     //(bs, seq_len)
     // [[1, 1, 1, 1, 0, 0]]
@@ -583,4 +605,13 @@ pub fn repeat_interleave(t: &Tensor, repeats: usize, dim: usize) -> Result<Tenso
     let indices_tensor = Tensor::from_vec(indices, (dims[dim] * repeats,), t.device())?;
     let t = t.index_select(&indices_tensor, dim)?;
     Ok(t)
+}
+
+pub fn apply_threshold(probs: &Tensor, threshold: f32) -> Result<Tensor> {
+    // probs shape: (m)
+    let m = probs.dim(0)?;
+    let thres_vec = vec![threshold; m];
+    let thres_t = Tensor::new(thres_vec, probs.device())?;
+    let res = probs.ge(&thres_t)?;
+    Ok(res)
 }
