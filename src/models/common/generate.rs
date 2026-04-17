@@ -117,6 +117,32 @@ fn sample_and_push(
     generated.push(token);
     Ok(token)
 }
+pub fn generate_generic_text<M: InferenceModel>(
+    model: &mut M,
+    tokenizer: &TokenizerModel,
+    input_ids: Tensor,
+    data: MultiModalData,
+    ctx: &mut GenerationContext,
+) -> Result<String> {
+    let mut generated = Vec::new();
+    let eos_ids = model.stop_token_ids();
+    let logits = model.forward_initial(&input_ids, ctx.seqlen_offset, data)?;
+    let next_token = sample_and_push(ctx, &logits, &mut generated)?;
+    let mut input_ids = ctx.prepare_for_next_token(next_token)?;
+
+    // 自回归循环
+    for _ in 1..ctx.sample_len {
+        let logits = model.forward_step(&input_ids, ctx.seqlen_offset)?;
+        let next_token = sample_and_push(ctx, &logits, &mut generated)?;
+
+        if eos_ids.contains(&next_token) {
+            break;
+        }
+        input_ids = ctx.prepare_for_next_token(next_token)?;
+    }
+    let text = tokenizer.token_decode(generated)?;
+    Ok(text)
+}
 
 pub fn generate_generic<M: InferenceModel>(
     model: &mut M,

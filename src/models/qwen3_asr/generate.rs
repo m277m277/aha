@@ -1,7 +1,11 @@
 use std::time::Instant;
 
 use crate::{
-    models::common::generate::get_logit_processor,
+    models::common::{
+        MultiModalData,
+        generate::{GenerationContext, generate_generic_text, get_logit_processor},
+        modules::{AsrResult, VadFrameResult},
+    },
     params::chat::{ChatCompletionChunkResponse, ChatCompletionParameters, ChatCompletionResponse},
     utils::response_utils::{build_chunk_response_with_usage, build_completion_response_with_time},
 };
@@ -39,6 +43,7 @@ pub struct Qwen3AsrGenerateModel<'a> {
     eos_token_id2: u32,
     generation_config: Qwen3ASRGenerationConfig,
     model_name: String,
+    default_template: String,
 }
 
 impl<'a> Qwen3AsrGenerateModel<'a> {
@@ -59,7 +64,7 @@ impl<'a> Qwen3AsrGenerateModel<'a> {
         let dtype = get_dtype(dtype, cfg_dtype);
         let model_list = find_type_files(path, "safetensors")?;
         let vb = unsafe { VarBuilder::from_mmaped_safetensors(&model_list, dtype, &device)? };
-        let qwen3_asr = Qwen3ASRModel::new(vb, &cfg)?;
+        let qwen3_asr = Qwen3ASRModel::new(vb, &cfg, generation_config.eos_token_id.clone())?;
         let model_name = std::path::Path::new(path)
             .file_name()
             .and_then(|s| s.to_str())
@@ -76,7 +81,43 @@ impl<'a> Qwen3AsrGenerateModel<'a> {
             eos_token_id2: generation_config.eos_token_id[1] as u32,
             generation_config,
             model_name,
+            default_template: "<|im_start|>system\n<|im_end|>\n<|im_start|>user\n<|audio_start|><|audio_pad|><|audio_end|><|im_end|>\n<|im_start|>assistant\n".to_string(),
         })
+    }
+
+    pub fn audio_recognize(&mut self, vad_res: VadFrameResult) -> Result<AsrResult> {
+        if !vad_res.is_speech || vad_res.orig_audio.is_none() {
+            return Ok(AsrResult::init_empty());
+        }
+        if vad_res.is_speech_start {
+            self.qwen3_asr.clear_kv_cache();
+        }
+        let audio_data =
+            self.processor
+                .process_vad_res(&self.default_template, vad_res, &self.tokenizer)?;
+        let input_ids = audio_data.input_ids.clone();
+        let input_features = Some(audio_data.input_features.clone().to_dtype(self.dtype)?);
+        let mut ctx = GenerationContext::new(
+            None,
+            None,
+            None,
+            None,
+            None,
+            32432,
+            input_ids.dim(1)?,
+            512,
+            self.device.clone(),
+        );
+        let data_vec = vec![input_features];
+        let data = MultiModalData::new(data_vec);
+        let text = generate_generic_text(
+            &mut self.qwen3_asr,
+            &self.tokenizer,
+            input_ids,
+            data,
+            &mut ctx,
+        )?;
+        Ok(AsrResult::init(text))
     }
 }
 

@@ -6,7 +6,7 @@ use anyhow::Result;
 use rocket::futures::StreamExt;
 #[test]
 fn qwen3_asr_generate() -> Result<()> {
-    // RUST_BACKTRACE=1 cargo test -F cuda qwen3_asr_generate -r -- --nocapture
+    // RUST_BACKTRACE=1 cargo test -F cuda --test test_qwen3_asr qwen3_asr_generate -r -- --nocapture
     let save_dir =
         aha::utils::get_default_save_dir().ok_or(anyhow::anyhow!("Failed to get save dir"))?;
     let model_path = format!("{}/Qwen/Qwen3-ASR-0.6B/", save_dir); //Qwen/Qwen3-ASR-1.7B
@@ -21,7 +21,7 @@ fn qwen3_asr_generate() -> Result<()> {
                         "type": "audio",
                         "audio_url": 
                         {
-                            "url": "https://package-release.coderbox.cn/aiway/test/other/%E5%93%AA%E5%90%92.wav"
+                            "url": "file://./assets/audio/voice_01.wav"
                         }
                     }
                 ]

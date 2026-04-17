@@ -21,7 +21,7 @@ fn fun_asr_nano_generate() -> Result<()> {
                         "type": "audio",
                         "audio_url": 
                         {
-                            "url": "file://./assets/audio/zh.mp3"
+                            "url": "file://./assets/audio/voice_01.wav"
                         }
                     },           
                     {

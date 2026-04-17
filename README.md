@@ -49,6 +49,12 @@ aha is a high-performance, cross-platform AI inference engine built with Rust an
 - **🧠 Attention Optimization** - Optional Flash Attention support for optimized long sequence processing
 
 ## Changelog
+### 2026-04-17
+- Qwen3ASR add vad data recognition
+
+### 2026-04-16
+- fix FireRedVAD fsmn cache bug
+
 ### 2026-04-15
 - add FireRedVAD
 
@@ -70,17 +76,6 @@ aha is a high-performance, cross-platform AI inference engine built with Rust an
 - refactor generate code 
 - \<think\>...\</think\> The content of the thought chain is returned using the reasoning_content field.
 - chat response add time info 
-
-### 2026-04-01
-- refactor deepseek_ocr/fun_asr_nano generate code 
-
-### 2026-03-31
-- add server and cli mod
-- aha model name use modelscope id replace 
-- update WhichModel 
-- Usage add time info
-- dependencies delete aha_openai_dive,chrono
-
 
 **[View full changelog](docs/changelog.md)** →
 

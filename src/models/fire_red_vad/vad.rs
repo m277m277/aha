@@ -3,10 +3,13 @@ use candle_core::{D, DType, Device, Tensor};
 use candle_nn::VarBuilder;
 
 use crate::{
-    models::fire_red_vad::{
-        config::{DetectModelConfig, FireRedVadConfig},
-        model::DetectModel,
-        processor::{AudioFeat, VadPostprocessor},
+    models::{
+        common::modules::VadFrameResult,
+        fire_red_vad::{
+            config::{DetectModelConfig, FireRedVadConfig},
+            model::DetectModel,
+            processor::{AudioFeat, VadPostprocessor},
+        },
     },
     utils::{
         audio_utils::{resample_audio_from_bytes, resample_audio_from_vec_f32},
@@ -19,15 +22,6 @@ use crate::{
 pub struct VadResult {
     pub dur: f32,
     pub timestamps: Vec<(f32, f32)>,
-    pub model_name: String,
-    pub mode: String,
-}
-
-#[derive(Debug)]
-pub struct VadFrameResult {
-    pub is_speech: bool,
-    pub orig_audio: Option<Tensor>,
-    pub kaldi_audio: Option<Tensor>,
     pub model_name: String,
     pub mode: String,
 }
@@ -107,6 +101,8 @@ impl FireRedVad {
         if preds_sum as f32 > probs.dim(0)? as f32 * self.cfg.speech_threshold {
             Ok(Some(VadFrameResult {
                 is_speech: true,
+                is_i16: true,
+                is_speech_start: false, // TODO: is start speech, asr to clear cache
                 orig_audio: Some(audio_frame.clone()),
                 kaldi_audio: Some(feats),
                 model_name: self.model_name.clone(),

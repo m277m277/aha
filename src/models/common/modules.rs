@@ -12,6 +12,39 @@ use crate::{
     utils::tensor_utils::{pad_replicate_last_dim, prepare_causal_attention_mask, repeat_kv},
 };
 
+#[derive(Debug)]
+pub struct VadFrameResult {
+    pub is_speech: bool,
+    pub is_speech_start: bool,
+    pub is_i16: bool,
+    pub orig_audio: Option<Tensor>,
+    pub kaldi_audio: Option<Tensor>,
+    pub model_name: String,
+    pub mode: String,
+}
+
+#[derive(Debug)]
+pub struct AsrResult {
+    pub is_empty: bool,
+    pub text: Option<String>,
+}
+
+impl AsrResult {
+    pub fn init_empty() -> Self {
+        AsrResult {
+            is_empty: true,
+            text: None,
+        }
+    }
+
+    pub fn init(text: String) -> Self {
+        AsrResult {
+            is_empty: false,
+            text: Some(text),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct GateUpDownMLP {
     gate_proj: Linear,

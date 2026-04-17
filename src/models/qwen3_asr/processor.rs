@@ -1,7 +1,8 @@
 use crate::{
-    models::common::modules::float_range_normalize, params::chat::ChatCompletionParameters,
+    models::common::modules::{VadFrameResult, float_range_normalize},
+    params::chat::ChatCompletionParameters,
 };
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use candle_core::{Device, Tensor};
 
 use crate::{
@@ -81,7 +82,7 @@ impl Qwen3AsrProcessor {
         })
     }
 
-    pub fn process_audio(&self, mes: &ChatCompletionParameters) -> Result<Vec<Tensor>> {
+    pub fn extract_audio_vec(&self, mes: &ChatCompletionParameters) -> Result<Vec<Tensor>> {
         let audio_tensors = extract_audios(mes, &self.device, Some(self.sample_rate))?;
         audio_tensors.iter().map(float_range_normalize).collect()
     }
@@ -94,6 +95,40 @@ impl Qwen3AsrProcessor {
         let replace = "<|audio_placeholder|>".repeat(token_len);
         let text = text.replacen(&self.audio_token, &replace, 1);
         text.replace("<|audio_placeholder|>", &self.audio_token)
+    }
+
+    pub fn process_vad_res(
+        &self,
+        render: &str,
+        vad_res: VadFrameResult,
+        tokenizer: &TokenizerModel,
+    ) -> Result<AudioData> {
+        if let Some(audio) = &vad_res.orig_audio {
+            let audio_len = audio.dim(0)? as f32;
+            if audio_len > self.sample_rate as f32 * self.max_asr_input_seconds {
+                return Err(anyhow!("vad_res orig_audio is too long!"));
+            }
+            let mut audio = audio.unsqueeze(0)?;
+            if vad_res.is_i16 {
+                audio = audio.affine(1.0 / 32768.0, 0.0)?;
+            }
+            audio = float_range_normalize(&audio)?;
+            let (input_features, _) =
+                self.whisper_feature_extracor
+                    .call(&audio, self.sample_rate, false)?;
+            let audio_len = input_features.dim(2)?;
+            let output_len = get_feat_extract_output_lengths(audio_len);
+            let text = self.replace_special_tokens(render, output_len);
+            let input_ids = tokenizer.text_encode(text, &self.device)?;
+            let input_features = input_features.squeeze(0)?;
+            let audio_data = AudioData {
+                input_features,
+                input_ids,
+            };
+            Ok(audio_data)
+        } else {
+            Err(anyhow!("vad_res orig_audio is none!"))
+        }
     }
 
     pub fn process_info(
@@ -122,7 +157,7 @@ impl Qwen3AsrProcessor {
                 render = format!("{}language {}'<asr_text>'", render, lang);
             }
         }
-        let audio_tensors = self.process_audio(mes)?;
+        let audio_tensors = self.extract_audio_vec(mes)?;
         let audio_len = audio_tensors.len();
         if audio_len != audio_count {
             return Err(anyhow::anyhow!("audio_pad num != audio num"));

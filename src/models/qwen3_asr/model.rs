@@ -7,7 +7,10 @@ use candle_nn::{
 
 use crate::{
     models::{
-        common::modules::{NaiveAttention, get_conv2d, get_layer_norm},
+        common::{
+            InferenceModel,
+            modules::{NaiveAttention, get_conv2d, get_layer_norm},
+        },
         qwen3::model::Qwen3DecoderLayer,
         qwen3_asr::{
             config::{
@@ -364,12 +367,16 @@ impl Qwen3ASRThinker {
 
 pub struct Qwen3ASRModel {
     thinker: Qwen3ASRThinker,
+    stop_token_ids: Vec<u32>,
 }
 
 impl Qwen3ASRModel {
-    pub fn new(vb: VarBuilder, config: &Qwen3ASRConfig) -> Result<Self> {
+    pub fn new(vb: VarBuilder, config: &Qwen3ASRConfig, eos_ids: Vec<u32>) -> Result<Self> {
         let thinker = Qwen3ASRThinker::new(vb.pp("thinker"), &config.thinker_config)?;
-        Ok(Self { thinker })
+        Ok(Self {
+            thinker,
+            stop_token_ids: eos_ids,
+        })
     }
 
     pub fn forward(
@@ -385,5 +392,34 @@ impl Qwen3ASRModel {
     }
     pub fn clear_kv_cache(&mut self) {
         self.thinker.clear_kv_cache();
+    }
+}
+
+impl InferenceModel for Qwen3ASRModel {
+    fn forward_initial(
+        &mut self,
+        input_ids: &Tensor,
+        seqlen_offset: usize,
+        data: crate::models::common::MultiModalData,
+    ) -> Result<Tensor> {
+        if data.data_vec.len() != 1 {
+            return Err(anyhow::anyhow!(
+                "Qwen3 asr process data error, must have pixel_values, image_grid_thw, pixel_values_video, video_grid_thw"
+            ));
+        }
+        let input_features = &data.data_vec[0];
+        self.forward(input_ids, seqlen_offset, input_features.as_ref())
+    }
+
+    fn forward_step(&mut self, input_ids: &Tensor, seqlen_offset: usize) -> Result<Tensor> {
+        self.forward(input_ids, seqlen_offset, None)
+    }
+
+    fn clear_cache(&mut self) {
+        self.clear_kv_cache();
+    }
+
+    fn stop_token_ids(&self) -> Vec<u32> {
+        self.stop_token_ids.clone()
     }
 }

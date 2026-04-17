@@ -1455,7 +1455,7 @@ impl InferenceModel for Qwen3_5Model {
     ) -> Result<Tensor> {
         if data.data_vec.len() != 4 {
             return Err(anyhow::anyhow!(
-                "Lfm2VL process data error, must have pixel_values, image_grid_thw, pixel_values_video, video_grid_thw"
+                "Qwen3.5 process data error, must have pixel_values, image_grid_thw, pixel_values_video, video_grid_thw"
             ));
         }
         let pixel_values = &data.data_vec[0];
