@@ -6,6 +6,45 @@ use anyhow::Result;
 use rocket::futures::StreamExt;
 
 #[test]
+fn qwen3_5_generate_no_visual() -> Result<()> {
+    // test with cuda: RUST_BACKTRACE=1 cargo test -F cuda --test test_qwen3_5 qwen3_5_generate_no_visual -r -- --nocapture
+
+    let save_dir =
+        aha::utils::get_default_save_dir().ok_or(anyhow::anyhow!("Failed to get save dir"))?;
+    let model_path = format!("{}/Qwen/Qwen3.5-0.8B/", save_dir);
+
+    let message = r#"
+    {
+        "model": "qwen3.5",
+        "messages": [
+            {
+                "role": "user",
+                "content": [         
+                    {
+                        "type": "text", 
+                        "text": "你好啊"
+                    }
+                ]
+            }
+        ]
+    }
+    "#;
+    // "metadata": {"enable_thinking": "true"}
+    let mes: ChatCompletionParameters = serde_json::from_str(message)?;
+    let i_start = Instant::now();
+    let mut qwen3_5 = Qwen3_5GenerateModel::init_without_visual(&model_path, None, None)?;
+    let i_duration = i_start.elapsed();
+    println!("Time elapsed in load model is: {:?}", i_duration);
+
+    let res = qwen3_5.generate(mes)?;
+    println!("generate: \n {:?}", res);
+    if let Some(usage) = &res.usage {
+        println!("usage: \n {:?}", usage);
+    }
+    Ok(())
+}
+
+#[test]
 fn qwen3_5_generate() -> Result<()> {
     // test with cuda: RUST_BACKTRACE=1 cargo test -F cuda --test test_qwen3_5 qwen3_5_generate -r -- --nocapture
 

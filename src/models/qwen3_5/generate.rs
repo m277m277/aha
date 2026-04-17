@@ -64,6 +64,42 @@ impl<'a> Qwen3_5GenerateModel<'a> {
         })
     }
 
+    pub fn init_without_visual(
+        path: &str,
+        device: Option<&Device>,
+        dtype: Option<DType>,
+    ) -> Result<Self> {
+        let model_name = std::path::Path::new(path)
+            .file_name()
+            .and_then(|s| s.to_str())
+            .unwrap_or("qwen3.5");
+        let chat_template = ChatTemplate::init(path)?;
+        let tokenizer = TokenizerModel::init(path)?;
+        let config_path = path.to_string() + "/config.json";
+        let cfg: Qwen3_5Config = serde_json::from_slice(&std::fs::read(config_path)?)?;
+        let device = get_device(device);
+        let cfg_dtype = cfg.text_config.dtype.as_str();
+        let dtype = get_dtype(dtype, cfg_dtype);
+        // let pre_processor = Qwen3VLProcessor::new(path, &device, dtype)?;
+        let pre_processor = None;
+        let model_list = find_type_files(path, "safetensors")?;
+        let vb = unsafe { VarBuilder::from_mmaped_safetensors(&model_list, dtype, &device)? };
+        let eos_ids = vec![cfg.text_config.eos_token_id];
+        // let qwen3_5 = Qwen3_5Model::new_from_vb(vb, cfg, eos_ids)?;
+        let qwen3_5 = Qwen3_5Model::new_from_vb_without_visual(vb, cfg, eos_ids)?;
+
+        Ok(Self {
+            chat_template,
+            tokenizer,
+            pre_processor,
+            qwen3_5,
+            device,
+            model_name: model_name.to_string(),
+            repeat_penalty: 1.0,
+            repeat_last_n: 64,
+        })
+    }
+
     pub fn init_from_gguf(
         model_file: &str,
         mmproj_file: Option<&str>,

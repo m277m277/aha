@@ -1077,6 +1077,38 @@ impl Qwen3_5Model {
         })
     }
 
+    pub fn new_from_vb_without_visual(
+        vb: VarBuilder,
+        config: Qwen3_5Config,
+        eos_ids: Vec<u32>,
+    ) -> Result<Self> {
+        let vb_m = vb.pp("model");
+        // let visual = Qwen3VLVisionModel::new(config.vision_config.clone(), vb_m.pp("visual"))?;
+        let visual = None;
+        let language_model =
+            Qwen3_5TextModel::new_from_vb(vb_m.pp("language_model"), &config.text_config)?;
+        let lm_head = if config.tie_word_embeddings {
+            Linear::new(language_model.embed_tokens.embeddings().clone(), None)
+        } else {
+            linear_no_bias(
+                config.text_config.hidden_size,
+                config.text_config.vocab_size,
+                vb.pp("lm_head"),
+            )?
+        };
+        Ok(Self {
+            spatial_merge_size: config.vision_config.spatial_merge_size,
+            image_token_id: config.image_token_id,
+            video_token_id: config.video_token_id,
+            vision_start_token_id: config.vision_start_token_id,
+            visual,
+            language_model,
+            lm_head: ProjKind::LinearProj(lm_head),
+            rope_deltas: None,
+            stop_token_ids: eos_ids,
+        })
+    }
+
     pub fn new_from_gguf<R: Read + Seek>(
         gguf: &mut Gguf<R>,
         mmproj_gguf: Option<&mut Gguf<R>>,
