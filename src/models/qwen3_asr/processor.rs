@@ -97,6 +97,37 @@ impl Qwen3AsrProcessor {
         text.replace("<|audio_placeholder|>", &self.audio_token)
     }
 
+    pub fn process_audio_tensor(
+        &self,
+        render: &str,
+        audio: &Tensor,
+        is_i16: bool,
+        tokenizer: &TokenizerModel,
+    ) -> Result<AudioData> {
+        let audio_len = audio.dim(0)? as f32;
+        if audio_len > self.sample_rate as f32 * self.max_asr_input_seconds {
+            return Err(anyhow!("vad_res orig_audio is too long!"));
+        }
+        let mut audio = audio.unsqueeze(0)?;
+        if is_i16 {
+            audio = audio.affine(1.0 / 32768.0, 0.0)?;
+        }
+        audio = float_range_normalize(&audio)?;
+        let (input_features, _) =
+            self.whisper_feature_extracor
+                .call(&audio, self.sample_rate, false)?;
+        let audio_len = input_features.dim(2)?;
+        let output_len = get_feat_extract_output_lengths(audio_len);
+        let text = self.replace_special_tokens(render, output_len);
+        let input_ids = tokenizer.text_encode(text, &self.device)?;
+        let input_features = input_features.squeeze(0)?;
+        let audio_data = AudioData {
+            input_features,
+            input_ids,
+        };
+        Ok(audio_data)
+    }
+
     pub fn process_vad_res(
         &self,
         render: &str,
@@ -104,28 +135,7 @@ impl Qwen3AsrProcessor {
         tokenizer: &TokenizerModel,
     ) -> Result<AudioData> {
         if let Some(audio) = &vad_res.orig_audio {
-            let audio_len = audio.dim(0)? as f32;
-            if audio_len > self.sample_rate as f32 * self.max_asr_input_seconds {
-                return Err(anyhow!("vad_res orig_audio is too long!"));
-            }
-            let mut audio = audio.unsqueeze(0)?;
-            if vad_res.is_i16 {
-                audio = audio.affine(1.0 / 32768.0, 0.0)?;
-            }
-            audio = float_range_normalize(&audio)?;
-            let (input_features, _) =
-                self.whisper_feature_extracor
-                    .call(&audio, self.sample_rate, false)?;
-            let audio_len = input_features.dim(2)?;
-            let output_len = get_feat_extract_output_lengths(audio_len);
-            let text = self.replace_special_tokens(render, output_len);
-            let input_ids = tokenizer.text_encode(text, &self.device)?;
-            let input_features = input_features.squeeze(0)?;
-            let audio_data = AudioData {
-                input_features,
-                input_ids,
-            };
-            Ok(audio_data)
+            self.process_audio_tensor(render, audio, vad_res.is_i16, tokenizer)
         } else {
             Err(anyhow!("vad_res orig_audio is none!"))
         }
