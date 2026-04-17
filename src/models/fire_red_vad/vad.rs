@@ -102,7 +102,7 @@ impl FireRedVad {
             Ok(Some(VadFrameResult {
                 is_speech: true,
                 is_i16: true,
-                is_speech_start: false, // TODO: is start speech, asr to clear cache
+                is_speech_start: true, // TODO: is start speech, asr to clear cache
                 orig_audio: Some(audio_frame.clone()),
                 kaldi_audio: Some(feats),
                 model_name: self.model_name.clone(),

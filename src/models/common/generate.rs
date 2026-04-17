@@ -140,6 +140,7 @@ pub fn generate_generic_text<M: InferenceModel>(
         }
         input_ids = ctx.prepare_for_next_token(next_token)?;
     }
+    model.clear_cache();
     let text = tokenizer.token_decode(generated)?;
     Ok(text)
 }
