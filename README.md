@@ -226,7 +226,7 @@ Apache-2.0 &mdash; See [LICENSE](LICENSE) for details.
 
 | Wechat Group | Donate |
 |--------------|--------|
-| ![Wechat Group](./assets/img/aha_weixinqun.png) | ![Donate](./assets/img/donate.png) |
+| ![Wechat Group-expired 260425](./assets/img/aha_weixinqun.png) | ![Donate](./assets/img/donate.png) |
 
 </div>
 
