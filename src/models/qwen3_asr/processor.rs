@@ -1,6 +1,5 @@
 use crate::{
-    models::common::modules::{VadFrameResult, float_range_normalize},
-    params::chat::ChatCompletionParameters,
+    models::common::modules::float_range_normalize, params::chat::ChatCompletionParameters,
 };
 use anyhow::{Result, anyhow};
 use candle_core::{Device, Tensor};
@@ -101,7 +100,6 @@ impl Qwen3AsrProcessor {
         &self,
         render: &str,
         audio: &Tensor,
-        is_i16: bool,
         tokenizer: &TokenizerModel,
     ) -> Result<AudioData> {
         let audio_len = audio.dim(0)? as f32;
@@ -109,9 +107,6 @@ impl Qwen3AsrProcessor {
             return Err(anyhow!("vad_res orig_audio is too long!"));
         }
         let mut audio = audio.unsqueeze(0)?;
-        if is_i16 {
-            audio = audio.affine(1.0 / 32768.0, 0.0)?;
-        }
         audio = float_range_normalize(&audio)?;
         let (input_features, _) =
             self.whisper_feature_extracor
@@ -126,19 +121,6 @@ impl Qwen3AsrProcessor {
             input_ids,
         };
         Ok(audio_data)
-    }
-
-    pub fn process_vad_res(
-        &self,
-        render: &str,
-        vad_res: VadFrameResult,
-        tokenizer: &TokenizerModel,
-    ) -> Result<AudioData> {
-        if let Some(audio) = &vad_res.orig_audio {
-            self.process_audio_tensor(render, audio, vad_res.is_i16, tokenizer)
-        } else {
-            Err(anyhow!("vad_res orig_audio is none!"))
-        }
     }
 
     pub fn process_info(

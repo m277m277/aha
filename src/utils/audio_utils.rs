@@ -462,11 +462,7 @@ pub fn get_audio_format_from_bytes(bytes: &[u8]) -> Result<String> {
     }
 }
 
-pub fn load_audio_use_symphonia(
-    audio_vec: Vec<u8>,
-    is_i16: bool,
-    device: &Device,
-) -> Result<(Tensor, usize)> {
+pub fn load_audio_use_symphonia(audio_vec: Vec<u8>, device: &Device) -> Result<(Tensor, usize)> {
     let extension = get_audio_format_from_bytes(&audio_vec)?;
     let content = Cursor::new(audio_vec);
     let mss = MediaSourceStream::new(Box::new(content), Default::default());
@@ -509,14 +505,7 @@ pub fn load_audio_use_symphonia(
                                 all_samples.push(Vec::new());
                             }
                             let channel_data = buf.chan(channel);
-                            if is_i16 {
-                                // 将[-1.0, 1.0] => [-i16_max, i16_max]
-                                let i16_data: Vec<f32> =
-                                    channel_data.iter().map(|&s| s * 32768.0).collect();
-                                all_samples[channel].extend_from_slice(&i16_data);
-                            } else {
-                                all_samples[channel].extend_from_slice(channel_data);
-                            }
+                            all_samples[channel].extend_from_slice(channel_data);
                         }
                     }
                     AudioBufferRef::S16(buf) => {
@@ -527,17 +516,10 @@ pub fn load_audio_use_symphonia(
                                 all_samples.push(Vec::new());
                             }
                             let channel_data = buf.chan(channel);
-                            let float_samples: Vec<f32> = if is_i16 {
-                                channel_data
-                                    .iter()
-                                    .map(|&s| s as f32) // 转换为f32类型
-                                    .collect()
-                            } else {
-                                channel_data
-                                    .iter()
-                                    .map(|&s| s as f32 / 32768.0) // 转换为[-1, 1]
-                                    .collect()
-                            };
+                            let float_samples: Vec<f32> = channel_data
+                                .iter()
+                                .map(|&s| s as f32 / 32768.0) // 转换为[-1, 1]
+                                .collect();
                             all_samples[channel].extend(float_samples);
                         }
                     }
@@ -549,17 +531,10 @@ pub fn load_audio_use_symphonia(
                                 all_samples.push(Vec::new());
                             }
                             let channel_data = buf.chan(channel);
-                            let float_samples: Vec<f32> = if is_i16 {
-                                channel_data
-                                    .iter()
-                                    .map(|&s| s.inner() as f32 / 8388608.0 * 32768.0) // 转换为[-i16_max, i16_max]
-                                    .collect()
-                            } else {
-                                channel_data
-                                    .iter()
-                                    .map(|&s| s.inner() as f32 / 8388608.0) // 转换为[-1, 1]
-                                    .collect()
-                            };
+                            let float_samples: Vec<f32> = channel_data
+                                .iter()
+                                .map(|&s| s.inner() as f32 / 8388608.0) // 转换为[-1, 1]
+                                .collect();
                             all_samples[channel].extend(float_samples);
                         }
                     }
@@ -584,7 +559,7 @@ pub fn load_audio_use_symphonia(
 
 pub fn load_audio(path: &str, device: &Device) -> Result<(Tensor, usize)> {
     let audio_vec = get_audio_bytes_vec(path)?;
-    load_audio_use_symphonia(audio_vec, false, device)
+    load_audio_use_symphonia(audio_vec, device)
 }
 
 pub fn resample_audio_from_vec_f32(
@@ -593,11 +568,11 @@ pub fn resample_audio_from_vec_f32(
     channels: usize,
     orig_sr: Option<usize>,
     target_sample_rate: Option<usize>,
-    is_i16: bool,
 ) -> Result<Tensor> {
     let frame_len = audio_vec.len() / channels;
     let audio = Tensor::new(&audio_vec[0..frame_len * channels], device)?;
     let mut audio = if channels > 1 {
+        // 交错格式（立体声时 LRLR...）
         audio
             .reshape((frame_len, channels))?
             .mean_keepdim(1)?
@@ -613,9 +588,6 @@ pub fn resample_audio_from_vec_f32(
     {
         audio = resample_simple(&audio, sr as i64, target_sample_rate as i64)?;
     }
-    if is_i16 {
-        audio = audio.affine(32768.0, 0.0)?;
-    }
     Ok(audio)
 }
 
@@ -623,9 +595,8 @@ pub fn resample_audio_from_bytes(
     audio_vec: Vec<u8>,
     device: &Device,
     target_sample_rate: Option<usize>,
-    is_i16: bool,
 ) -> Result<Tensor> {
-    let (mut audio, sr) = load_audio_use_symphonia(audio_vec, is_i16, device)?;
+    let (mut audio, sr) = load_audio_use_symphonia(audio_vec, device)?;
     if let Some(target_sample_rate) = target_sample_rate
         && target_sample_rate != sr
     {
@@ -638,13 +609,12 @@ pub fn load_audio_with_resample(
     path: &str,
     device: &Device,
     target_sample_rate: Option<usize>,
-    is_i16: bool,
 ) -> Result<Tensor> {
     // hound 只支持wav文件
     // let audio_path = get_audio_path(path)?;
     // let (mut audio, sr) = load_audio_use_hound(audio_path, device)?;
     let audio_vec = get_audio_bytes_vec(path)?;
-    resample_audio_from_bytes(audio_vec, device, target_sample_rate, is_i16)
+    resample_audio_from_bytes(audio_vec, device, target_sample_rate)
 }
 
 pub fn save_wav(audio: &Tensor, save_path: &str, sample_rate: u32) -> Result<()> {
@@ -719,7 +689,7 @@ pub fn extract_audios(
     // 并行加载音频
     audio_url_vec
         .par_iter()
-        .map(|url| load_audio_with_resample(url, device, target_sample_rate, false))
+        .map(|url| load_audio_with_resample(url, device, target_sample_rate))
         .collect()
     // #[cfg(not(feature = "ffmpeg"))]
     // {

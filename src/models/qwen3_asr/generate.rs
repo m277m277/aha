@@ -90,19 +90,16 @@ impl<'a> Qwen3AsrGenerateModel<'a> {
             return Ok(AsrResult::init_empty());
         }
         if let Some(audio) = vad_res.orig_audio {
-            self.asr_audio(&audio, vad_res.is_i16)
+            self.asr_audio(&audio)
         } else {
             Ok(AsrResult::init_empty())
         }
     }
 
-    pub fn asr_audio(&mut self, audio: &Tensor, is_i16: bool) -> Result<AsrResult> {
-        let audio_data = self.processor.process_audio_tensor(
-            &self.default_template,
-            audio,
-            is_i16,
-            &self.tokenizer,
-        )?;
+    pub fn asr_audio(&mut self, audio: &Tensor) -> Result<AsrResult> {
+        let audio_data =
+            self.processor
+                .process_audio_tensor(&self.default_template, audio, &self.tokenizer)?;
         let input_ids = audio_data.input_ids.clone();
         let input_features = Some(audio_data.input_features.clone().to_dtype(self.dtype)?);
         let mut ctx = GenerationContext::new(

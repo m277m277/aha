@@ -16,8 +16,7 @@ use crate::{
 pub struct VadFrameResult {
     pub is_speech: bool,
     // pub is_speech_start: bool,
-    pub is_i16: bool,
-    pub orig_audio: Option<Tensor>,
+    pub orig_audio: Option<Tensor>, // nedd f32 data type
     // pub kaldi_audio: Option<Tensor>,
     pub model_name: String,
     pub mode: String,

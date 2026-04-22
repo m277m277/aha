@@ -133,8 +133,9 @@ impl AudioFeat {
     }
 
     pub fn extract_file(&self, audio_path: &str, device: &Device) -> Result<(Tensor, f32)> {
-        let wave_tensor =
-            load_audio_with_resample(audio_path, device, Some(16000), true)?.squeeze(0)?;
+        let wave_tensor = load_audio_with_resample(audio_path, device, Some(16000))?.squeeze(0)?;
+        // fire_red_vad need i16 type data
+        let wave_tensor = wave_tensor.affine(32768.0, 0.0)?;
         let dur = wave_tensor.dim(0)? as f32 / 16000.0;
         let fbank = self.extract(&wave_tensor)?;
         Ok((fbank, dur))

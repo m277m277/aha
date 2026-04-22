@@ -36,6 +36,11 @@ pub struct FireRedVad {
     caches: Option<Vec<Tensor>>,
     frame_length_sample: usize,
     speech_cache: Vec<Tensor>,
+    pred_cache: Vec<u32>,
+    min_speach_frames: usize,
+    look_back_frames: usize,
+    min_speach_ratio: f32,
+    end_silence_ratio: f32,
 }
 
 impl FireRedVad {
@@ -78,6 +83,11 @@ impl FireRedVad {
             caches: None,
             frame_length_sample: 400,
             speech_cache: vec![],
+            pred_cache: vec![],
+            min_speach_frames: 30, // 约 250ms
+            look_back_frames: 15,  // 约 80ms
+            min_speach_ratio: 0.1,
+            end_silence_ratio: 0.8,
         })
     }
 
@@ -89,7 +99,8 @@ impl FireRedVad {
                 audio_frame.dim(0)?
             ));
         }
-        let feats = self.audio_feat.extract(audio_frame)?;
+        let wave_tensor = audio_frame.affine(32768.0, 0.0)?;
+        let feats = self.audio_feat.extract(&wave_tensor)?;
         let (probs, caches) = self
             .vad_model
             .forward(&feats.unsqueeze(0)?, self.caches.as_ref())?;
@@ -101,42 +112,45 @@ impl FireRedVad {
             .to_dtype(DType::U32)?;
         let preds_sum = binary_preds.sum_all()?.to_scalar::<u32>()?;
         let probs_len = probs.dim(0)?;
-        // 输入数据中 is_speech > 0.1, 认为这帧数据可用
-        let final_data = if preds_sum as f32 > probs_len as f32 * 0.1 {
-            // 通过最后10个数据，判断说话是否结束，如果数据长度小于10就取整个长度
-            let select_len = if probs_len > 10 { 10 } else { probs_len };
-            let last_10_preds_sum = binary_preds
-                .narrow(0, probs_len - select_len, select_len)?
-                .sum_all()?
-                .to_scalar::<u32>()?;
-            // 选中数据中，至少0.8个是 speech, 认为说话没有结束，缓存数据，等待下一帧
-            if last_10_preds_sum >= (select_len as f32 * 0.8).ceil() as u32 {
-                self.speech_cache.push(audio_frame.clone());
+        // 输入数据中 is_speech > 0.1, 认为这帧数据有人声
+        let final_data = if preds_sum as f32 > probs_len as f32 * self.min_speach_ratio {
+            self.speech_cache.push(audio_frame.clone());
+            let preds = binary_preds.to_vec1::<u32>()?;
+            self.pred_cache.extend_from_slice(&preds);
+
+            // 人声缓存数据过少，等待下一帧
+            if self.pred_cache.len() < self.min_speach_frames {
                 None
             } else {
-                // 否则认为此次说话结束，结合缓存数据，一起返回
-                let data = if self.speech_cache.is_empty() {
-                    // 缓存数据为空，直接返回
-                    audio_frame.clone()
+                // 判断是否停止说话
+                let start = self.pred_cache.len() - self.look_back_frames;
+                let look_back = self.pred_cache[start..].iter().sum::<u32>();
+                // 判断结尾是否静音
+                let silence_ratio = 1.0 - (look_back as f32 / self.look_back_frames as f32);
+                if silence_ratio >= self.end_silence_ratio {
+                    // 静音返回缓存数据并清空缓存
+                    let speech = Tensor::cat(&self.speech_cache, 0)?;
+                    self.speech_cache.clear();
+                    self.pred_cache.clear();
+                    Some(speech)
                 } else {
-                    // 缓存数据不为空，cat数据
-                    self.speech_cache.push(audio_frame.clone());
-                    let audio_frame = Tensor::cat(&self.speech_cache, 0)?;
-                    self.speech_cache = vec![]; // 清空缓存
-                    audio_frame
-                };
-                Some(data)
+                    // 不是静音此次返回None
+                    None
+                }
             }
         } else {
-            // 认为这帧数据不可用，是否有缓存数据
-            if self.speech_cache.is_empty() {
-                // 没有返回None
-                None
+            // 认为这帧数据没有人声
+            // 有缓存数据, 且数据够长
+            if self.pred_cache.len() >= self.min_speach_frames {
+                let data = Tensor::cat(&self.speech_cache, 0)?;
+                self.speech_cache.clear();
+                self.pred_cache.clear();
+                Some(data)
             } else {
-                // 有缓存，返回缓存数据
-                let data = Some(Tensor::cat(&self.speech_cache, 0)?);
-                self.speech_cache.clear(); // 清空缓存
-                data
+                // 否则直接清空缓存
+                self.speech_cache.clear();
+                self.pred_cache.clear();
+                None
             }
         };
 
@@ -145,7 +159,6 @@ impl FireRedVad {
         } else {
             Ok(Some(VadFrameResult {
                 is_speech: true,
-                is_i16: true,
                 orig_audio: final_data,
                 model_name: self.model_name.clone(),
                 mode: "speech".to_string(),
@@ -168,7 +181,6 @@ impl FireRedVad {
             channels,
             orig_sr,
             Some(16000),
-            true,
         )?
         .squeeze(0)?;
         self.detect_frame(&audio_frame)
@@ -179,7 +191,7 @@ impl FireRedVad {
             return Err(anyhow!("only stream model support detect_frame"));
         }
         let audio_frame =
-            resample_audio_from_bytes(audio_bytes, &self.device, Some(16000), true)?.squeeze(0)?;
+            resample_audio_from_bytes(audio_bytes, &self.device, Some(16000))?.squeeze(0)?;
         self.detect_frame(&audio_frame)
     }
 

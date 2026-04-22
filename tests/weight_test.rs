@@ -410,3 +410,18 @@ fn fire_red_vad_weight() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn silero_vad_weight() -> Result<()> {
+    // cargo test -F cuda --test weight_test silero_vad_weight -r -- --nocapture
+    let save_dir =
+        aha::utils::get_default_save_dir().ok_or(anyhow::anyhow!("Failed to get save dir"))?;
+    let model_path = format!("{}/silero_vad/silero_vad_16k.safetensors", save_dir);
+    let device = get_device(None);
+    let weights = safetensors::load(model_path, &device)?;
+    for (key, tensor) in weights.iter() {
+        println!("=== {} === {:?}", key, tensor);
+    }
+
+    Ok(())
+}
