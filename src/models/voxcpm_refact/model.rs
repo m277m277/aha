@@ -366,7 +366,13 @@ impl VoxCPMModelRefact {
             && let Some(audio_mask) = &audio_mask
         {
             let audio_len = audio_mask.dim(1)?;
-            if audio_mask.narrow(1, audio_len - 1, 1)?.to_scalar::<u32>()? == 1 {
+            if audio_mask
+                .narrow(1, audio_len - 1, 1)?
+                .squeeze(0)?
+                .squeeze(0)?
+                .to_scalar::<u32>()?
+                == 1
+            {
                 let audio_len = audio_mask.sum_all()?.to_scalar::<u32>()? as usize;
                 let context_len = audio_len.min(streaming_prefix_len - 1);
                 let start = audio_feat.dim(1)? - context_len;
