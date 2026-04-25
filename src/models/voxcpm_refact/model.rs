@@ -396,6 +396,7 @@ impl VoxCPMModelRefact {
             .forward_with_cache(&input_embeds, position_id)?;
         let mut residual_hidden = residual_enc_outputs.i((.., t - 1, ..))?;
         let stream = stream! {
+            let mut first_flag = true;
             for i in 0..max_len {
                 let dit_hidden_1 = self.lm_to_dit_proj.forward(&lm_hidden)?; // [b, h_dit]
                 let dit_hidden_2 = self.res_to_dit_proj.forward(&residual_hidden)?; // [b, h_dit]
@@ -422,7 +423,7 @@ impl VoxCPMModelRefact {
                 let curr_embed = self.feat_encoder.forward(&pred_feat.unsqueeze(1)?)?; // [b, 1, c]
                 let curr_embed = self.enc_to_lm_proj.forward(&curr_embed)?;
                 let single_feat_pred = pred_feat.permute((0, 2, 1))?.contiguous()?;
-                let decode_audio = audio_vae
+                let mut decode_audio = audio_vae
                     .decode(&single_feat_pred.to_dtype(DType::F32)?, None)?
                     .squeeze(1)?;
                 prefix_feat_cond = pred_feat;
@@ -434,10 +435,17 @@ impl VoxCPMModelRefact {
                     .i(0)?
                     .to_scalar::<u32>()?;
                 if i > min_len && stop_flag == 1 {
+                    // 最后一段去除噪音
                     let decode_audio_len = decode_audio.dim(D::Minus1)? - 640;
-                    let decode_audio = decode_audio.narrow(D::Minus1, 0, decode_audio_len)?;
-                    yield Ok(decode_audio);  // 最后一段去除噪音
+                    decode_audio = decode_audio.narrow(D::Minus1, 0, decode_audio_len)?;
+                    yield Ok(decode_audio);
                     break;
+                }
+                if first_flag {
+                    // 去除初始噪音
+                    let decode_audio_len = decode_audio.dim(D::Minus1)? - 640;
+                    decode_audio = decode_audio.narrow(D::Minus1, 640, decode_audio_len)?;
+                    first_flag = false;
                 }
                 yield Ok(decode_audio);
                 position_id += seq_len;
